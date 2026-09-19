@@ -3,6 +3,7 @@
 Deliberately NOT the raw transcript: a failed transcript left in context anchors the next attempt on the
 same wrong path (context contamination). We hand over a structured post-mortem instead.
 """
+
 from __future__ import annotations
 
 import re
@@ -49,8 +50,9 @@ The exact test command and the specific test names that must go green.
 Ranked. The most likely root cause first, with the one line of evidence for it from the material above.
 """
 
-_TOOLCALL_RE = re.compile(r"<function_calls>.*?</function_calls>|<invoke\b.*?</invoke>|</?function_calls>|</?invoke[^>]*>",
-                          re.S)
+_TOOLCALL_RE = re.compile(
+    r"<function_calls>.*?</function_calls>|<invoke\b.*?</invoke>|</?function_calls>|</?invoke[^>]*>", re.S
+)
 
 
 def sanitize(text: str) -> tuple[str, bool]:
@@ -60,15 +62,21 @@ def sanitize(text: str) -> tuple[str, bool]:
     return clean.strip(), n > 0
 
 
-def make_handoff(issue: str, brief: str, transcript: str, model: str = "haiku",
-                 scan_text: str = "(not provided)") -> tuple[str, llm.LLMResult]:
+def make_handoff(
+    issue: str, brief: str, transcript: str, model: str = "haiku", scan_text: str = "(not provided)"
+) -> tuple[str, llm.LLMResult]:
     say(f"handoff: distilling the failed attempt with {model} ...")
-    res = llm.call(HANDOFF_PROMPT.format(issue=issue.strip(), scan=scan_text.strip(), brief=brief.strip(),
-                                         transcript=transcript.strip()), model=model, system=HANDOFF_SYSTEM)
+    res = llm.call(
+        HANDOFF_PROMPT.format(
+            issue=issue.strip(), scan=scan_text.strip(), brief=brief.strip(), transcript=transcript.strip()
+        ),
+        model=model,
+        system=HANDOFF_SYSTEM,
+    )
     body, had_markup = sanitize(res.text)
     if had_markup:
         say("handoff: model emitted fake tool calls (it has no tools); stripped them")
     header = f"<!-- preflight handoff | model={res.model} | cost=${res.cost_usd:.4f} | tokens={res.total_tokens} -->\n"
-    say(f"handoff: ${res.cost_usd:.4f}, {res.duration_ms/1000:.0f}s")
+    say(f"handoff: ${res.cost_usd:.4f}, {res.duration_ms / 1000:.0f}s")
     block("HANDOFF (brief v2 for the next tier)", body)
     return header + "# Brief (v2, after failed attempt)\n\n" + body + "\n", res

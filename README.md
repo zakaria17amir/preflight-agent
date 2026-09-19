@@ -2,8 +2,32 @@
 
 **Brief the agent, size the job, start cheap.**
 
-**Live dashboard:** https://zakaria17amir.github.io/preflight-agent/ — every result below, per-model analytics, and
-a recorded cascade run. (Static snapshot of the committed results; agent runs happen on your machine, see *Live demo*.)
+[![CI](https://github.com/zakaria17amir/preflight-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/zakaria17amir/preflight-agent/actions/workflows/ci.yml)
+[![Dashboard](https://img.shields.io/badge/dashboard-live-3ecf8e)](https://zakaria17amir.github.io/preflight-agent/)
+[![Demo issue](https://img.shields.io/badge/demo%20target-calcx--demo%231-4f8cff)](https://github.com/zakaria17amir/calcx-demo/issues/1)
+
+**Live dashboard:** https://zakaria17amir.github.io/preflight-agent/ — every result below, per-model analytics,
+and **▶ replay** on any recorded run to step through it. (Static snapshot of committed results; agent runs happen
+on your machine, see *Quick start*.)
+
+## Quick start on a fresh laptop (≈5 minutes)
+
+```bash
+git clone https://github.com/zakaria17amir/preflight-agent.git && cd preflight-agent
+python -m pip install pytest                 # Python 3.11+; this is the only dependency
+python -m pytest -q                          # 14 tests, no network, no LLM: should pass immediately
+
+# Pick an agent CLI (either works; both are free of API keys, each owns its own login):
+#   Claude Code:  https://docs.anthropic.com/en/docs/claude-code  -> `claude` once, follow the login
+#   Devin CLI:    https://docs.devin.ai/cli                      -> `devin auth login`
+
+python bench/dashboard.py                    # terminal 1: http://localhost:8765/dashboard.html (works with no runs yet)
+python -m preflight cascade https://github.com/zakaria17amir/calcx-demo/issues/1 --tiers haiku,sonnet --cheap-max-turns 2
+```
+
+The second command clones a public repo with a planted bug, reads its GitHub issue, and runs the whole cascade
+(~60 s, ~$0.13 on Claude). Watch the **run tracker** on the dashboard while it runs. No CLI installed? Everything
+except agent runs still works: tests, `scan`, the dashboard, and the replay of the recorded runs on the live site.
 
 A tech-lead pass that runs *before* a coding agent does: it orients the agent, sizes the task, tries the cheap
 model first, and escalates with a distilled post-mortem when that fails. Built in a 3-hour hackathon, with a
@@ -214,7 +238,8 @@ Every run's brief, handoff, diff, test output and agent summary is in `bench/res
 ### Reproduce
 
 ```bash
-python -m pytest -q                                  # 12 tests: scan ranking, size parsing, every bug breaks the target
+python -m pytest -q                                  # 14 tests: scan ranking, size parsing, pricing, every bug breaks the target
+python -m ruff check . && python -m ruff format --check .   # lint + format, same as CI
 python bench/run_bench.py                            # arms A,B,C; resumable
 python bench/run_bench.py --arms D_cascade_nohandoff,E_capped_handoff,F_capped_nohandoff --cheap-turns 4
 python bench/run_bench.py --redo --bugs power_assoc --arms C_cascade
@@ -233,6 +258,28 @@ dashboard to GitHub Pages (`.github/workflows/pages.yml`); the site is the commi
 - **88k tokens of CLI overhead per call** until `--strict-mcp-config`. Measure your harness before your prompt.
 - **A seeded bug that broke no test** slipped through until the guard test caught it. Every bench bug now has a
   test proving it fails on the clean target.
+
+## Built with Devin
+
+Everything in this repository was written by Devin (Devin Desktop, Claude Fable 5.1) driven by one person over a
+single hackathon session; every commit carries `Co-Authored-By: Devin`. How it was driven, because *how* matters
+more than *that*:
+
+- **Idea → plan → build in one thread.** The session started with a written problem statement; Devin's first
+  output was a literature check (SWE-Router, Darwin Cascade, CodeRescue, the context-contamination result) that
+  narrowed the pitch from "brief + cascade" to the one question those papers leave open. The plan, cut list and
+  time budget were agreed before any code.
+- **Review loop, not just generation.** The repo's `code-review` skill was run against the demo, and it found a
+  real defect (the handoff model fabricating tool calls) plus four demo-killers, all fixed and tested in the next
+  commit. See *What we found while building it*.
+- **Measurement drove the design.** Devin measured the CLI's per-call overhead (88k → 7k tokens), caught a seeded
+  bug that broke no test via a guard test, and reported the arm where the cascade *lost* rather than hiding it.
+- **Devin CLI is also an engine.** `--engine devin` drives Devin's own CLI as the agent under test, across 48
+  model families; the cross-vendor result (GPT-5.6 Luna fixing bugs from a Claude-written brief) came from that.
+- **CI as a gate.** `.github/workflows/ci.yml` runs ruff + pytest on Linux and Windows, Python 3.11 and 3.13;
+  `pages.yml` redeploys the dashboard on every results push.
+- **Sessions & PRs:** see the *Devin evidence* links on the submission (session transcript, PR
+  [#1](https://github.com/zakaria17amir/preflight-agent/pulls) with the rubric-hardening changes).
 
 ## Related work and what this adds
 

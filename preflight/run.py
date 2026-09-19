@@ -1,4 +1,5 @@
 """One agent attempt: copy the repo to a scratch dir, let the agent work, verify with the repo's tests."""
+
 from __future__ import annotations
 
 import shutil
@@ -53,23 +54,35 @@ class Attempt:
     workdir: Path | None = None
 
     def summary(self) -> str:
-        return (f"[{self.model}] {'PASS' if self.passed else 'FAIL'} ${self.cost_usd:.4f} {self.tokens} tok "
-                f"{self.turns} turns {self.seconds:.0f}s | {self.tests.summary}")
+        return (
+            f"[{self.model}] {'PASS' if self.passed else 'FAIL'} ${self.cost_usd:.4f} {self.tokens} tok "
+            f"{self.turns} turns {self.seconds:.0f}s | {self.tests.summary}"
+        )
 
     def transcript_for_handoff(self) -> str:
-        return (f"model: {self.model}\nresult: {'PASS' if self.passed else 'FAIL'}\n\n"
-                f"## Agent's own summary\n{self.agent_summary}\n\n## Diff produced\n{self.diff[:6000] or '(no changes)'}\n\n"
-                f"## Test output\n{self.tests.output[-4000:]}")
+        return (
+            f"model: {self.model}\nresult: {'PASS' if self.passed else 'FAIL'}\n\n"
+            f"## Agent's own summary\n{self.agent_summary}\n\n## Diff produced\n{self.diff[:6000] or '(no changes)'}\n\n"
+            f"## Test output\n{self.tests.output[-4000:]}"
+        )
 
 
 def run_tests(root: Path, test_cmd: str, timeout: int = 300) -> TestResult:
     try:
-        p = subprocess.run(test_cmd, shell=True, cwd=str(root), capture_output=True, text=True, timeout=timeout,
-                           encoding="utf-8", errors="replace")
+        p = subprocess.run(
+            test_cmd,
+            shell=True,
+            cwd=str(root),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            encoding="utf-8",
+            errors="replace",
+        )
     except subprocess.TimeoutExpired:
         return TestResult(False, "tests timed out", "")
     out = (p.stdout + "\n" + p.stderr).strip()
-    last = next((l for l in reversed(out.splitlines()) if l.strip()), "")
+    last = next((line for line in reversed(out.splitlines()) if line.strip()), "")
     return TestResult(p.returncode == 0, last[:200], out)
 
 
@@ -79,31 +92,46 @@ def fresh_copy(root: Path) -> Path:
     subprocess.run(["git", "init", "-q"], cwd=dst, check=True)
     subprocess.run(["git", "config", "core.autocrlf", "false"], cwd=dst, check=True)
     subprocess.run(["git", "add", "-A"], cwd=dst, check=True)
-    subprocess.run(["git", "-c", "user.email=p@f", "-c", "user.name=preflight", "commit", "-qm", "base"], cwd=dst, check=True)
+    subprocess.run(
+        ["git", "-c", "user.email=p@f", "-c", "user.name=preflight", "commit", "-qm", "base"], cwd=dst, check=True
+    )
     return dst
 
 
 def git_diff(root: Path) -> str:
-    return subprocess.run(["git", "diff"], cwd=root, capture_output=True, text=True, encoding="utf-8",
-                          errors="replace").stdout
+    return subprocess.run(
+        ["git", "diff"], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace"
+    ).stdout
 
 
-def attempt(root: Path, issue: str, brief: str | None = None, model: str = "haiku", test_cmd: str | None = None,
-            workdir: Path | None = None, timeout: int = 900, max_turns: int | None = None) -> Attempt:
+def attempt(
+    root: Path,
+    issue: str,
+    brief: str | None = None,
+    model: str = "haiku",
+    test_cmd: str | None = None,
+    workdir: Path | None = None,
+    timeout: int = 900,
+    max_turns: int | None = None,
+) -> Attempt:
     """Run one attempt. If `workdir` is given, work there (already a fresh copy); else make one.
 
     `max_turns` caps the agent's tool-call budget; a capped cheap attempt is how the cascade keeps failure cheap.
     """
     wd = workdir or fresh_copy(root)
     test_cmd = test_cmd or scan(root, issue).test_cmd
-    prompt = (ATTEMPT_PROMPT_BRIEFED.format(issue=issue, brief=brief) if brief
-              else ATTEMPT_PROMPT_COLD.format(issue=issue))
-    say(f"attempt: {model}{f' (budget {max_turns} tool calls)' if max_turns else ''}, "
-        f"{'with brief' if brief else 'cold'}, working in {wd}")
+    prompt = (
+        ATTEMPT_PROMPT_BRIEFED.format(issue=issue, brief=brief) if brief else ATTEMPT_PROMPT_COLD.format(issue=issue)
+    )
+    say(
+        f"attempt: {model}{f' (budget {max_turns} tool calls)' if max_turns else ''}, "
+        f"{'with brief' if brief else 'cold'}, working in {wd}"
+    )
     t0 = time.time()
     try:
-        res = llm.call(prompt, model=model, cwd=wd, agentic=True, timeout=timeout, system=ATTEMPT_SYSTEM,
-                       max_turns=max_turns)
+        res = llm.call(
+            prompt, model=model, cwd=wd, agentic=True, timeout=timeout, system=ATTEMPT_SYSTEM, max_turns=max_turns
+        )
         text, cost, tok, turns = res.text, res.cost_usd, res.total_tokens, res.num_turns
         if res.raw.get("subtype") == "error_max_turns":
             text = f"(hit the {max_turns}-turn budget before finishing)\n" + text
@@ -115,5 +143,15 @@ def attempt(root: Path, issue: str, brief: str | None = None, model: str = "haik
     diff = git_diff(wd)
     say(f"tests {'PASS' if tests.passed else 'FAIL'}: {tests.summary}")
     block(f"diff from {model}" + ("" if diff.strip() else " (empty)"), diff or "(agent made no changes)", max_lines=40)
-    return Attempt(model=model, passed=tests.passed, cost_usd=cost, tokens=tok, turns=turns, seconds=secs,
-                   tests=tests, agent_summary=text, diff=diff, workdir=wd)
+    return Attempt(
+        model=model,
+        passed=tests.passed,
+        cost_usd=cost,
+        tokens=tok,
+        turns=turns,
+        seconds=secs,
+        tests=tests,
+        agent_summary=text,
+        diff=diff,
+        workdir=wd,
+    )

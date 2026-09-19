@@ -1,4 +1,5 @@
 """Deterministic, zero-token repo scan. Everything the LLM sees about the repo comes from here."""
+
 from __future__ import annotations
 
 import os
@@ -7,19 +8,98 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-IGNORE_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", ".mypy_cache",
-               ".pytest_cache", ".idea", ".vscode", "target", ".tox", ".preflight"}
-CODE_EXT = {".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs", ".java", ".rb", ".cs", ".php", ".kt", ".swift", ".c", ".cpp", ".h"}
+IGNORE_DIRS = {
+    ".git",
+    "node_modules",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "dist",
+    "build",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".idea",
+    ".vscode",
+    "target",
+    ".tox",
+    ".preflight",
+}
+CODE_EXT = {
+    ".py",
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".go",
+    ".rs",
+    ".java",
+    ".rb",
+    ".cs",
+    ".php",
+    ".kt",
+    ".swift",
+    ".c",
+    ".cpp",
+    ".h",
+}
 MAX_FILE_BYTES = 200_000
-STOPWORDS = {"the", "a", "an", "and", "or", "of", "to", "in", "is", "it", "that", "this", "when", "with", "for",
-             "on", "be", "not", "should", "but", "are", "as", "at", "by", "from", "if", "we", "i", "you", "does",
-             "doesn", "t", "s", "returns", "return", "error", "bug", "fix", "instead", "gets", "get", "wrong"}
+STOPWORDS = {
+    "the",
+    "a",
+    "an",
+    "and",
+    "or",
+    "of",
+    "to",
+    "in",
+    "is",
+    "it",
+    "that",
+    "this",
+    "when",
+    "with",
+    "for",
+    "on",
+    "be",
+    "not",
+    "should",
+    "but",
+    "are",
+    "as",
+    "at",
+    "by",
+    "from",
+    "if",
+    "we",
+    "i",
+    "you",
+    "does",
+    "doesn",
+    "t",
+    "s",
+    "returns",
+    "return",
+    "error",
+    "bug",
+    "fix",
+    "instead",
+    "gets",
+    "get",
+    "wrong",
+}
 
 PYTEST = f'"{sys.executable}" -m pytest -q'  # don't assume `pytest` is on PATH
 TEST_HINTS = [
-    ("pyproject.toml", PYTEST), ("pytest.ini", PYTEST), ("setup.cfg", PYTEST), ("tox.ini", PYTEST),
-    ("package.json", "npm test"), ("Cargo.toml", "cargo test"), ("go.mod", "go test ./..."),
-    ("pom.xml", "mvn test"), ("build.gradle", "gradle test"), ("Gemfile", "bundle exec rspec"),
+    ("pyproject.toml", PYTEST),
+    ("pytest.ini", PYTEST),
+    ("setup.cfg", PYTEST),
+    ("tox.ini", PYTEST),
+    ("package.json", "npm test"),
+    ("Cargo.toml", "cargo test"),
+    ("go.mod", "go test ./..."),
+    ("pom.xml", "mvn test"),
+    ("build.gradle", "gradle test"),
+    ("Gemfile", "bundle exec rspec"),
 ]
 
 
@@ -85,10 +165,15 @@ def detect_test_cmd(root: Path, tree: list[str]) -> str:
 def detect_conventions(root: Path, tree: list[str], sample: list[Path]) -> list[str]:
     conv = []
     names = {Path(p).name for p in tree}
-    for marker, note in [("pyproject.toml", "Python project (pyproject.toml)"), ("ruff.toml", "ruff lint config"),
-                         (".pre-commit-config.yaml", "pre-commit hooks present"), ("tsconfig.json", "TypeScript"),
-                         (".eslintrc.json", "eslint"), ("Makefile", "Makefile present: check targets"),
-                         ("CONTRIBUTING.md", "CONTRIBUTING.md exists: read before editing")]:
+    for marker, note in [
+        ("pyproject.toml", "Python project (pyproject.toml)"),
+        ("ruff.toml", "ruff lint config"),
+        (".pre-commit-config.yaml", "pre-commit hooks present"),
+        ("tsconfig.json", "TypeScript"),
+        (".eslintrc.json", "eslint"),
+        ("Makefile", "Makefile present: check targets"),
+        ("CONTRIBUTING.md", "CONTRIBUTING.md exists: read before editing"),
+    ]:
         if marker in names:
             conv.append(note)
     tests_dirs = sorted({str(Path(p).parent) for p in tree if re.search(r"(^|/)(tests?|__tests__|spec)(/|$)", p)})
@@ -130,28 +215,42 @@ def scan(root: Path, issue: str, max_hits: int = 12) -> Scan:
             is_test = bool(re.search(r"(^|/)(tests?|__tests__|spec)(/|$)|test_|_test\.|\.spec\.", rel))
             score *= 0.6 if is_test else 1.0
             for i, line in enumerate(text.splitlines()):
-                if any(kw.lower() in line.lower() for kw in kws[:8]) and re.search(r"\b(def|class|function|fn|func|export)\b", line):
-                    matched_lines.append(f"L{i+1}: {line.strip()[:110]}")
+                if any(kw.lower() in line.lower() for kw in kws[:8]) and re.search(
+                    r"\b(def|class|function|fn|func|export)\b", line
+                ):
+                    matched_lines.append(f"L{i + 1}: {line.strip()[:110]}")
                 if len(matched_lines) >= 5:
                     break
             hits.append(FileHit(rel, round(score, 1), matched_lines))
     hits.sort(key=lambda h: -h.score)
     sample = [root / h.path for h in hits[:6]] or code_files[:6]
-    return Scan(root=root, tree=tree, readme=readme, test_cmd=detect_test_cmd(root, tree),
-                conventions=detect_conventions(root, tree, sample), hits=hits[:max_hits],
-                n_files=len(files), languages=langs)
+    return Scan(
+        root=root,
+        tree=tree,
+        readme=readme,
+        test_cmd=detect_test_cmd(root, tree),
+        conventions=detect_conventions(root, tree, sample),
+        hits=hits[:max_hits],
+        n_files=len(files),
+        languages=langs,
+    )
 
 
 def render(s: Scan, max_tree: int = 120) -> str:
     """Compact text view of the scan for the LLM prompt."""
     tree = s.tree if len(s.tree) <= max_tree else s.tree[:max_tree] + [f"... ({len(s.tree) - max_tree} more)"]
-    parts = [f"# Repo: {s.root.name} ({s.n_files} files; languages: {s.languages})",
-             f"# Detected test command: {s.test_cmd}",
-             "# Conventions detected:", *([f"- {c}" for c in s.conventions] or ["- none"]),
-             "# File tree:", *tree,
-             "# README (truncated):", s.readme or "(none)",
-             "# Files matching issue keywords (ranked):"]
+    parts = [
+        f"# Repo: {s.root.name} ({s.n_files} files; languages: {s.languages})",
+        f"# Detected test command: {s.test_cmd}",
+        "# Conventions detected:",
+        *([f"- {c}" for c in s.conventions] or ["- none"]),
+        "# File tree:",
+        *tree,
+        "# README (truncated):",
+        s.readme or "(none)",
+        "# Files matching issue keywords (ranked):",
+    ]
     for h in s.hits:
         parts.append(f"- {h.path} (score {h.score})")
-        parts += [f"    {l}" for l in h.lines]
+        parts += [f"    {line}" for line in h.lines]
     return "\n".join(parts)

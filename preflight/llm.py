@@ -7,6 +7,7 @@
 
 No API keys anywhere; each CLI owns its own auth.
 """
+
 from __future__ import annotations
 
 import json
@@ -52,8 +53,15 @@ def _bin(name: str) -> str:
     return exe
 
 
-def call(prompt: str, model: str = "haiku", cwd: Path | None = None, agentic: bool = False,
-         timeout: int = 900, system: str | None = None, max_turns: int | None = None) -> LLMResult:
+def call(
+    prompt: str,
+    model: str = "haiku",
+    cwd: Path | None = None,
+    agentic: bool = False,
+    timeout: int = 900,
+    system: str | None = None,
+    max_turns: int | None = None,
+) -> LLMResult:
     """Run one non-interactive agent session on the configured engine.
 
     agentic=True lets the model use tools (read/edit/run) inside `cwd`; used for attempts.
@@ -65,25 +73,47 @@ def call(prompt: str, model: str = "haiku", cwd: Path | None = None, agentic: bo
 
 # --- claude -----------------------------------------------------------------------------------------------
 
+
 def _call_claude(prompt, model, cwd, agentic, timeout, system, max_turns) -> LLMResult:
     # --strict-mcp-config: ignore the user's MCP servers/plugins. Without it every call carries ~88k tokens of
     # tool schemas that have nothing to do with the task (measured: 10x the cost of a trivial call).
-    cmd = [_bin("claude"), "-p", "--model", model, "--output-format", "json", "--strict-mcp-config",
-           "--setting-sources", "project"]
+    cmd = [
+        _bin("claude"),
+        "-p",
+        "--model",
+        model,
+        "--output-format",
+        "json",
+        "--strict-mcp-config",
+        "--setting-sources",
+        "project",
+    ]
     cmd += ["--dangerously-skip-permissions"] if agentic else ["--tools", ""]
     if system:
         cmd += ["--append-system-prompt", system]
     if max_turns:
         cmd += ["--max-turns", str(max_turns)]
-    proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True, encoding="utf-8",
-                          errors="replace", cwd=str(cwd) if cwd else None, timeout=timeout)
+    proc = subprocess.run(
+        cmd,
+        input=prompt,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        cwd=str(cwd) if cwd else None,
+        timeout=timeout,
+    )
     out = proc.stdout.strip()
     start = out.find("{")
     if start < 0:
         raise RuntimeError(f"claude returned no JSON (exit {proc.returncode}): {proc.stderr[-500:]}")
     data = json.loads(out[start:])
     usage = data.get("usage", {})
-    inp = usage.get("input_tokens", 0) + usage.get("cache_creation_input_tokens", 0) + usage.get("cache_read_input_tokens", 0)
+    inp = (
+        usage.get("input_tokens", 0)
+        + usage.get("cache_creation_input_tokens", 0)
+        + usage.get("cache_read_input_tokens", 0)
+    )
     used_model = next(iter(data.get("modelUsage", {})), model)
     return LLMResult(
         text=data.get("result", "") or "",
@@ -113,31 +143,54 @@ def devin_env() -> dict:
 
 
 def _call_devin(prompt, model, cwd, agentic, timeout, system, max_turns) -> LLMResult:
-    from . import pricing
     import time
+
+    from . import pricing
 
     parts = []
     if system:
         parts.append(f"# Instructions\n{system}\n")
     if not agentic:
-        parts.append("# Constraint\nDo NOT use any tools (no file reads, no commands, no searches). "
-                     "Answer from the material in this message only.\n")
+        parts.append(
+            "# Constraint\nDo NOT use any tools (no file reads, no commands, no searches). "
+            "Answer from the material in this message only.\n"
+        )
     if max_turns:
-        parts.append(f"# Budget\nYou may make at most {max_turns} tool calls. If you cannot finish within that, "
-                     "stop, make no further changes, and reply with what you found.\n")
+        parts.append(
+            f"# Budget\nYou may make at most {max_turns} tool calls. If you cannot finish within that, "
+            "stop, make no further changes, and reply with what you found.\n"
+        )
     parts.append(prompt)
     full = "\n".join(parts)
 
     with tempfile.TemporaryDirectory(prefix="preflight_devin_") as td:
         pfile, export = Path(td) / "prompt.md", Path(td) / "atif.json"
         pfile.write_text(full, encoding="utf-8")
-        cmd = [_bin("devin"), "-p", "--prompt-file", str(pfile), "--model", model,
-               "--respect-workspace-trust", "false", "--export", str(export)]
+        cmd = [
+            _bin("devin"),
+            "-p",
+            "--prompt-file",
+            str(pfile),
+            "--model",
+            model,
+            "--respect-workspace-trust",
+            "false",
+            "--export",
+            str(export),
+        ]
         if agentic:
             cmd += ["--permission-mode", "dangerous"]
         t0 = time.time()
-        proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace",
-                              cwd=str(cwd) if cwd else None, timeout=timeout, env=devin_env())
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            cwd=str(cwd) if cwd else None,
+            timeout=timeout,
+            env=devin_env(),
+        )
         dur_ms = int((time.time() - t0) * 1000)
         if proc.returncode != 0 and not export.exists():
             raise RuntimeError(f"devin exited {proc.returncode}: {(proc.stderr or proc.stdout)[-500:]}")

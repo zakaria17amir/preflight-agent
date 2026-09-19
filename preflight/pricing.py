@@ -3,6 +3,7 @@
 Devin CLI does not report dollar cost per call, only tokens (in the ATIF export). We price those tokens at the
 list prices the CLI itself prints. Every number derived from this is an ESTIMATE and is labelled as such.
 """
+
 from __future__ import annotations
 
 import json
@@ -15,7 +16,9 @@ CACHE = Path(__file__).resolve().parents[1] / "bench" / "results" / "devin_price
 CACHE_TTL_S = 24 * 3600
 
 # "  claude-haiku-4-5-...   Claude Haiku 4.5 Medium  [200K context, $1 / 1M Input · $0.1 / 1M Cached input · $5 / 1M Output]"
-_LINE = re.compile(r"^\s{2}(\S+)\s{2,}(.+?)\s+\[[^\]]*?\$([\d.]+) / 1M Input · \$([\d.]+) / 1M Cached input · \$([\d.]+) / 1M Output\]")
+_LINE = re.compile(
+    r"^\s{2}(\S+)\s{2,}(.+?)\s+\[[^\]]*?\$([\d.]+) / 1M Input · \$([\d.]+) / 1M Cached input · \$([\d.]+) / 1M Output\]"
+)
 _FAMILY = re.compile(r"^(\S.*?) \(([\w.-]+)\)\s*$")
 _FREE = re.compile(r"^\s{2}(\S+)\s{2,}(.+?)\s+\[[^\]]*\bFree\b")
 
@@ -48,8 +51,15 @@ def load(env: dict | None = None) -> dict:
                 return data
         except ValueError:
             pass
-    p = subprocess.run(["devin", "models", "list"], capture_output=True, text=True, encoding="utf-8",
-                       errors="replace", env=env, timeout=60)
+    p = subprocess.run(
+        ["devin", "models", "list"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env,
+        timeout=60,
+    )
     data = parse(p.stdout)
     if data["variants"]:
         CACHE.parent.mkdir(parents=True, exist_ok=True)
@@ -68,8 +78,15 @@ def lookup(model_name: str, table: dict) -> dict | None:
         best = max((n for n in v if n.startswith(model_name)), key=len, default=None)
     if best is None:
         low = model_name.lower()
-        best = max((n for n in v if n.lower().split(" ")[0] in low and n.lower().split(" ")[1:2] and n.lower().split(" ")[1] in low),
-                   key=len, default=None)
+        best = max(
+            (
+                n
+                for n in v
+                if n.lower().split(" ")[0] in low and n.lower().split(" ")[1:2] and n.lower().split(" ")[1] in low
+            ),
+            key=len,
+            default=None,
+        )
     return v.get(best) if best else None
 
 

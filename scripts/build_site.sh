@@ -3,7 +3,8 @@
 # and Vercel (vercel.json). No build tools: the dashboard is one HTML file plus the committed results JSON.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-rm -rf site && mkdir -p site/results
+rm -rf site 2>/dev/null || rm -rf site/* 2>/dev/null || true   # a server may hold the dir open on Windows
+mkdir -p site/results
 cp bench/dashboard.html site/index.html
 for f in results.json live.json demo_transcript.txt; do
   [ -f "bench/results/$f" ] && cp "bench/results/$f" site/results/

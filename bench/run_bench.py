@@ -6,13 +6,13 @@
 
 Writes bench/results/results.json and prints a markdown table. Resumable: skips (bug, arm) pairs already done.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import os
 import re
-import shutil
 import sys
 import time
 from pathlib import Path
@@ -20,10 +20,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from bugs import BUGS, apply_bug  # noqa: E402
-from preflight.cascade import cascade  # noqa: E402
-from preflight.run import attempt, fresh_copy  # noqa: E402
-from preflight.brief import make_brief  # noqa: E402
+from bugs import BUGS, apply_bug
+from preflight.brief import make_brief
+from preflight.cascade import cascade
+from preflight.run import attempt, fresh_copy
 
 ROOT = Path(__file__).resolve().parent
 TARGET = ROOT / "target"
@@ -36,39 +36,66 @@ def buggy_copy(bug: str) -> tuple[Path, str]:
     issue = apply_bug(wd, bug)
     # commit the bug as the base so `git diff` shows only the agent's change
     import subprocess
+
     subprocess.run(["git", "add", "-A"], cwd=wd, check=True)
-    subprocess.run(["git", "-c", "user.email=p@f", "-c", "user.name=preflight", "commit", "-qm", "bug"], cwd=wd, check=True)
+    subprocess.run(
+        ["git", "-c", "user.email=p@f", "-c", "user.name=preflight", "commit", "-qm", "bug"], cwd=wd, check=True
+    )
     return wd, issue
 
 
 def arm_cold_strong(bug: str, model: str) -> dict:
     wd, issue = buggy_copy(bug)
     a = attempt(wd, issue, brief=None, model=model, test_cmd=TEST_CMD, workdir=wd)
-    return dict(passed=a.passed, cost=a.cost_usd, tokens=a.tokens, turns=a.turns, seconds=a.seconds,
-                stages=[dict(name="attempt1", model=a.model, cost=a.cost_usd, tokens=a.tokens, passed=a.passed)],
-                tests=a.tests.summary, summary=a.agent_summary[:600])
+    return dict(
+        passed=a.passed,
+        cost=a.cost_usd,
+        tokens=a.tokens,
+        turns=a.turns,
+        seconds=a.seconds,
+        stages=[dict(name="attempt1", model=a.model, cost=a.cost_usd, tokens=a.tokens, passed=a.passed)],
+        tests=a.tests.summary,
+        summary=a.agent_summary[:600],
+    )
 
 
 def arm_brief_cheap(bug: str, model: str) -> dict:
     wd, issue = buggy_copy(bug)
     brief, bres, _ = make_brief(wd, issue, model="haiku")
     a = attempt(wd, issue, brief=brief, model=model, test_cmd=TEST_CMD, workdir=wd)
-    return dict(passed=a.passed, cost=a.cost_usd + bres.cost_usd, tokens=a.tokens + bres.total_tokens, turns=a.turns,
-                seconds=a.seconds + bres.duration_ms / 1000,
-                stages=[dict(name="brief", model=bres.model, cost=bres.cost_usd, tokens=bres.total_tokens),
-                        dict(name="attempt1", model=a.model, cost=a.cost_usd, tokens=a.tokens, passed=a.passed)],
-                tests=a.tests.summary, summary=a.agent_summary[:600], brief=brief)
+    return dict(
+        passed=a.passed,
+        cost=a.cost_usd + bres.cost_usd,
+        tokens=a.tokens + bres.total_tokens,
+        turns=a.turns,
+        seconds=a.seconds + bres.duration_ms / 1000,
+        stages=[
+            dict(name="brief", model=bres.model, cost=bres.cost_usd, tokens=bres.total_tokens),
+            dict(name="attempt1", model=a.model, cost=a.cost_usd, tokens=a.tokens, passed=a.passed),
+        ],
+        tests=a.tests.summary,
+        summary=a.agent_summary[:600],
+        brief=brief,
+    )
 
 
 def arm_cascade(bug: str, tiers: list[str], use_handoff: bool = True, cheap_max_turns: int | None = None) -> dict:
     wd, issue = buggy_copy(bug)
     # cascade() makes its own fresh copies per attempt from `root`; give it the buggy tree as root.
     r = cascade(wd, issue, tiers=tiers, test_cmd=TEST_CMD, use_handoff=use_handoff, cheap_max_turns=cheap_max_turns)
-    return dict(passed=r.passed, cost=r.cost_usd, tokens=r.tokens, turns=sum(a.turns for a in r.attempts),
-                seconds=sum(s.seconds for s in r.stages),
-                stages=[dict(name=s.name, model=s.model, cost=s.cost_usd, tokens=s.tokens, passed=s.passed) for s in r.stages],
-                tests=r.attempts[-1].tests.summary, summary=r.attempts[-1].agent_summary[:600],
-                brief=r.brief, handoff=r.handoff, final_tier=r.final_tier)
+    return dict(
+        passed=r.passed,
+        cost=r.cost_usd,
+        tokens=r.tokens,
+        turns=sum(a.turns for a in r.attempts),
+        seconds=sum(s.seconds for s in r.stages),
+        stages=[dict(name=s.name, model=s.model, cost=s.cost_usd, tokens=s.tokens, passed=s.passed) for s in r.stages],
+        tests=r.attempts[-1].tests.summary,
+        summary=r.attempts[-1].agent_summary[:600],
+        brief=r.brief,
+        handoff=r.handoff,
+        final_tier=r.final_tier,
+    )
 
 
 ARMS = {
@@ -116,10 +143,17 @@ def table(results: dict, bugs: list[str], arms: list[str]) -> str:
             ft = r.get("final_tier") or ""
             tier = f" ({short_model(ft)})" if ft else ""
             row.append(f"{'PASS' if r['passed'] else 'FAIL'} ${r['cost']:.3f}{tier}")
-            tot[a]["cost"] += r["cost"]; tot[a]["passed"] += r["passed"]; tot[a]["n"] += 1
+            tot[a]["cost"] += r["cost"]
+            tot[a]["passed"] += r["passed"]
+            tot[a]["n"] += 1
         lines.append("| " + " | ".join(row) + " |")
-    lines.append("| **total** | | " + " | ".join(
-        f"**{tot[a]['passed']}/{tot[a]['n']} pass, ${tot[a]['cost']:.3f}**" if tot[a]["n"] else "—" for a in arms) + " |")
+    lines.append(
+        "| **total** | | "
+        + " | ".join(
+            f"**{tot[a]['passed']}/{tot[a]['n']} pass, ${tot[a]['cost']:.3f}**" if tot[a]["n"] else "—" for a in arms
+        )
+        + " |"
+    )
     return "\n".join(lines)
 
 
@@ -131,16 +165,27 @@ def main():
     ap.add_argument("--cheap", default="haiku")
     ap.add_argument("--strong", default="sonnet")
     ap.add_argument("--cheap-turns", type=int, default=4, help="turn budget for the cheap tier in arms E/F")
-    ap.add_argument("--engine", choices=("claude", "devin"), default=os.environ.get("PREFLIGHT_ENGINE", "claude"),
-                    help="claude: exact $; devin: any of 48 model families, $ estimated from list prices")
+    ap.add_argument(
+        "--engine",
+        choices=("claude", "devin"),
+        default=os.environ.get("PREFLIGHT_ENGINE", "claude"),
+        help="claude: exact $; devin: any of 48 model families, $ estimated from list prices",
+    )
     ap.add_argument("--redo", action="store_true", help="rerun even if a result exists")
     a = ap.parse_args()
     os.environ["PREFLIGHT_ENGINE"] = a.engine
     cfg = dict(cheap=a.cheap, strong=a.strong, cheap_turns=a.cheap_turns)
+
     # Results from different engines / tier pairs are different experiments: keep them as distinct arm names.
     # Filesystem-safe (no ':' or '>' — NTFS treats ':' as an alternate data stream separator).
-    safe = lambda s: re.sub(r"[^A-Za-z0-9._-]", "-", s)
-    suffix = "" if a.engine == "claude" and (a.cheap, a.strong) == ("haiku", "sonnet") else f"@{a.engine}_{safe(a.cheap)}-to-{safe(a.strong)}"
+    def safe(s: str) -> str:
+        return re.sub(r"[^A-Za-z0-9._-]", "-", s)
+
+    suffix = (
+        ""
+        if a.engine == "claude" and (a.cheap, a.strong) == ("haiku", "sonnet")
+        else f"@{a.engine}_{safe(a.cheap)}-to-{safe(a.strong)}"
+    )
     RESULTS.mkdir(exist_ok=True)
     (RESULTS / "runs").mkdir(exist_ok=True)
     rpath = RESULTS / "results.json"
@@ -166,8 +211,11 @@ def main():
             (RESULTS / "runs" / f"{bug}.{key}.json").write_text(json.dumps(r, indent=1), encoding="utf-8")
             results = load_results()
             rpath.write_text(json.dumps(results, indent=1), encoding="utf-8")
-            print(f"    -> {'PASS' if r['passed'] else 'FAIL'} ${r['cost']:.4f} {r['tokens']} tok {r['wall']:.0f}s"
-                  + (f"  ERROR {r['error']}" if r.get("error") else ""), flush=True)
+            print(
+                f"    -> {'PASS' if r['passed'] else 'FAIL'} ${r['cost']:.4f} {r['tokens']} tok {r['wall']:.0f}s"
+                + (f"  ERROR {r['error']}" if r.get("error") else ""),
+                flush=True,
+            )
     results = load_results()
     rpath.write_text(json.dumps(results, indent=1), encoding="utf-8")
     all_keys = sorted({k for b in bugs for k in results.get(b, {})}, key=lambda k: (k.split("@")[0], k))
@@ -182,7 +230,9 @@ def main():
     if readme.exists():
         text = readme.read_text(encoding="utf-8")
         block = f"<!-- RESULTS_TABLE -->\n{md}\n<!-- /RESULTS_TABLE -->"
-        new = re.sub(r"<!-- RESULTS_TABLE -->.*?(<!-- /RESULTS_TABLE -->|\n\n)", block + "\n\n", text, count=1, flags=re.S)
+        new = re.sub(
+            r"<!-- RESULTS_TABLE -->.*?(<!-- /RESULTS_TABLE -->|\n\n)", block + "\n\n", text, count=1, flags=re.S
+        )
         readme.write_text(new, encoding="utf-8")
 
 

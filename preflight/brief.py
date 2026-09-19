@@ -1,4 +1,5 @@
 """Generate BRIEF.md: what a tech lead would tell the agent before delegating."""
+
 from __future__ import annotations
 
 import re
@@ -81,9 +82,13 @@ def make_brief(root: Path, issue: str, model: str = "haiku") -> tuple[str, llm.L
     say(f"brief: asking {model} ...")
     res = llm.call(BRIEF_PROMPT.format(scan=render(s), issue=issue.strip()), model=model, system=BRIEF_SYSTEM)
     size, tier = parse_size_tier(res.text)
-    header = (f"<!-- preflight brief | model={res.model} | cost=${res.cost_usd:.4f} | "
-              f"tokens={res.total_tokens} | size={size} tier={tier} | heuristic_size={heuristic_size(s)} -->\n")
+    header = (
+        f"<!-- preflight brief | model={res.model} | cost=${res.cost_usd:.4f} | "
+        f"tokens={res.total_tokens} | size={size} tier={tier} | heuristic_size={heuristic_size(s)} -->\n"
+    )
     text = header + "# Brief\n\n" + res.text.strip() + "\n"
-    say(f"brief: size={size} tier={tier} (heuristic {heuristic_size(s)}), ${res.cost_usd:.4f}, {res.duration_ms/1000:.0f}s")
+    say(
+        f"brief: size={size} tier={tier} (heuristic {heuristic_size(s)}), ${res.cost_usd:.4f}, {res.duration_ms / 1000:.0f}s"
+    )
     block("BRIEF", res.text)
     return text, res, s

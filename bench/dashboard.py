@@ -3,9 +3,11 @@ so a running bench or a live `preflight cascade` shows up without reloading.
 
     python bench/dashboard.py            # http://localhost:8765/dashboard.html
 """
+
 from __future__ import annotations
 
 import argparse
+import contextlib
 import functools
 import webbrowser
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -35,10 +37,8 @@ def main():
     print(f"preflight dashboard: {url}  (Ctrl+C to stop)")
     if not a.no_open:
         webbrowser.open(url)
-    try:
+    with contextlib.suppress(KeyboardInterrupt):
         srv.serve_forever()
-    except KeyboardInterrupt:
-        pass
 
 
 if __name__ == "__main__":

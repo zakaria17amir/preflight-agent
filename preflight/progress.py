@@ -1,6 +1,7 @@
 """Step tracker for a running cascade. Writes bench/results/progress.json on every transition; the dashboard
 polls it and renders the side panel ("which step is it on, what did the last step conclude").
 """
+
 from __future__ import annotations
 
 import json
@@ -16,9 +17,18 @@ STEPS = ["scan", "brief", "attempt1", "handoff", "attempt2", "attempt3", "patch"
 class Progress:
     def __init__(self, title: str, repo: str, issue: str, engine: str, tiers: list[str]):
         self.state = dict(
-            title=title, repo=repo, issue=issue[:300], engine=engine, tiers=tiers,
-            status="running", started=time.time(), updated=time.time(), finished=None,
-            steps=[], total_cost=0.0, passed=None,
+            title=title,
+            repo=repo,
+            issue=issue[:300],
+            engine=engine,
+            tiers=tiers,
+            status="running",
+            started=time.time(),
+            updated=time.time(),
+            finished=None,
+            steps=[],
+            total_cost=0.0,
+            passed=None,
         )
         self._write()
 
@@ -30,14 +40,19 @@ class Progress:
         os.replace(tmp, PATH)
 
     def start(self, step: str, detail: str = "") -> None:
-        self.state["steps"].append(dict(name=step, status="running", detail=detail, summary="", started=time.time(),
-                                        seconds=None, cost=None))
+        self.state["steps"].append(
+            dict(name=step, status="running", detail=detail, summary="", started=time.time(), seconds=None, cost=None)
+        )
         self._write()
 
     def done(self, summary: str, cost: float | None = None, ok: bool | None = None) -> None:
         s = self.state["steps"][-1]
-        s.update(status="done" if ok is None else ("pass" if ok else "fail"), summary=summary[:600],
-                 seconds=round(time.time() - s["started"], 1), cost=cost)
+        s.update(
+            status="done" if ok is None else ("pass" if ok else "fail"),
+            summary=summary[:600],
+            seconds=round(time.time() - s["started"], 1),
+            cost=cost,
+        )
         if cost:
             self.state["total_cost"] = round(self.state["total_cost"] + cost, 5)
         self._write()
@@ -55,7 +70,15 @@ class Progress:
 
 class NoProgress:
     """Drop-in when no tracking is wanted (the bench)."""
-    def start(self, *a, **k): pass
-    def done(self, *a, **k): pass
-    def finish(self, *a, **k): pass
-    def fail(self, *a, **k): pass
+
+    def start(self, *a, **k):
+        pass
+
+    def done(self, *a, **k):
+        pass
+
+    def finish(self, *a, **k):
+        pass
+
+    def fail(self, *a, **k):
+        pass
