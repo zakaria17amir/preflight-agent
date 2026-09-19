@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
 import shutil
 import sys
 import time
@@ -82,6 +84,15 @@ ARMS = {
 DEFAULT_ARMS = ["A_cold_strong", "B_brief_cheap", "C_cascade"]
 
 
+def short_model(name: str) -> str:
+    """'claude-haiku-4-5-20251001' -> 'haiku'; 'GPT-5.6 Luna Medium Thinking' -> 'gpt-5.6 luna'."""
+    if name.startswith("claude-"):
+        return name.split("-")[1]
+    words = name.replace(" Thinking", "").split()
+    words = [w for w in words if w.lower() not in {"medium", "low", "high", "xhigh", "max", "none", "fast", "no"}]
+    return " ".join(words[:2]).lower()
+
+
 def load_results() -> dict:
     out: dict = {}
     for f in sorted((RESULTS / "runs").glob("*.json")):
@@ -92,6 +103,8 @@ def load_results() -> dict:
 
 def table(results: dict, bugs: list[str], arms: list[str]) -> str:
     lines = ["| bug | size | " + " | ".join(arms) + " |", "|---|---|" + "---|" * len(arms)]
+    if not arms:
+        return ""
     tot = {a: dict(cost=0.0, passed=0, n=0) for a in arms}
     for b in bugs:
         row = [b, BUGS[b]["size"]]
@@ -101,7 +114,7 @@ def table(results: dict, bugs: list[str], arms: list[str]) -> str:
                 row.append("—")
                 continue
             ft = r.get("final_tier") or ""
-            tier = f" ({ft.split('-')[1] if ft.startswith('claude-') else ft})" if ft else ""
+            tier = f" ({short_model(ft)})" if ft else ""
             row.append(f"{'PASS' if r['passed'] else 'FAIL'} ${r['cost']:.3f}{tier}")
             tot[a]["cost"] += r["cost"]; tot[a]["passed"] += r["passed"]; tot[a]["n"] += 1
         lines.append("| " + " | ".join(row) + " |")
@@ -118,9 +131,16 @@ def main():
     ap.add_argument("--cheap", default="haiku")
     ap.add_argument("--strong", default="sonnet")
     ap.add_argument("--cheap-turns", type=int, default=4, help="turn budget for the cheap tier in arms E/F")
+    ap.add_argument("--engine", choices=("claude", "devin"), default=os.environ.get("PREFLIGHT_ENGINE", "claude"),
+                    help="claude: exact $; devin: any of 48 model families, $ estimated from list prices")
     ap.add_argument("--redo", action="store_true", help="rerun even if a result exists")
     a = ap.parse_args()
+    os.environ["PREFLIGHT_ENGINE"] = a.engine
     cfg = dict(cheap=a.cheap, strong=a.strong, cheap_turns=a.cheap_turns)
+    # Results from different engines / tier pairs are different experiments: keep them as distinct arm names.
+    # Filesystem-safe (no ':' or '>' — NTFS treats ':' as an alternate data stream separator).
+    safe = lambda s: re.sub(r"[^A-Za-z0-9._-]", "-", s)
+    suffix = "" if a.engine == "claude" and (a.cheap, a.strong) == ("haiku", "sonnet") else f"@{a.engine}_{safe(a.cheap)}-to-{safe(a.strong)}"
     RESULTS.mkdir(exist_ok=True)
     (RESULTS / "runs").mkdir(exist_ok=True)
     rpath = RESULTS / "results.json"
@@ -128,31 +148,38 @@ def main():
     bugs, arms = a.bugs.split(","), a.arms.split(",")
     for bug in bugs:
         for arm in arms:
-            if not a.redo and results.get(bug, {}).get(arm):
+            key = arm + suffix
+            if not a.redo and results.get(bug, {}).get(key):
                 continue
-            print(f"\n=== {bug} / {arm} ===", flush=True)
+            print(f"\n=== {bug} / {key} ===", flush=True)
             t0 = time.time()
             try:
                 r = ARMS[arm](bug, cfg)
             except Exception as e:  # keep the bench going; record the failure
                 r = dict(passed=False, cost=0.0, tokens=0, turns=0, seconds=time.time() - t0, stages=[], error=repr(e))
             r["wall"] = time.time() - t0
+            r["engine"] = a.engine
+            r["tiers"] = [a.cheap, a.strong]
+            r["cost_estimated"] = a.engine == "devin"
             # per-run files are the source of truth; results.json is rebuilt from them so concurrent
             # bench processes (different arms) can't clobber each other's results.
-            (RESULTS / "runs" / f"{bug}.{arm}.json").write_text(json.dumps(r, indent=1), encoding="utf-8")
+            (RESULTS / "runs" / f"{bug}.{key}.json").write_text(json.dumps(r, indent=1), encoding="utf-8")
             results = load_results()
             rpath.write_text(json.dumps(results, indent=1), encoding="utf-8")
             print(f"    -> {'PASS' if r['passed'] else 'FAIL'} ${r['cost']:.4f} {r['tokens']} tok {r['wall']:.0f}s"
                   + (f"  ERROR {r['error']}" if r.get("error") else ""), flush=True)
     results = load_results()
     rpath.write_text(json.dumps(results, indent=1), encoding="utf-8")
-    shown = a.table_arms.split(",") if a.table_arms else [x for x in ARMS if any(x in results.get(b, {}) for b in bugs)]
+    all_keys = sorted({k for b in bugs for k in results.get(b, {})}, key=lambda k: (k.split("@")[0], k))
+    shown = a.table_arms.split(",") if a.table_arms else [k for k in all_keys if "@" not in k]
     md = table(results, bugs, shown)
+    extra = [k for k in all_keys if "@" in k]
+    if extra:
+        md += "\n\nOther engines / tier pairs (devin $ are list-price estimates):\n\n" + table(results, bugs, extra)
     print("\n" + md)
     (RESULTS / "table.md").write_text(md, encoding="utf-8")
     readme = ROOT.parent / "README.md"
     if readme.exists():
-        import re
         text = readme.read_text(encoding="utf-8")
         block = f"<!-- RESULTS_TABLE -->\n{md}\n<!-- /RESULTS_TABLE -->"
         new = re.sub(r"<!-- RESULTS_TABLE -->.*?(<!-- /RESULTS_TABLE -->|\n\n)", block + "\n\n", text, count=1, flags=re.S)

@@ -65,11 +65,37 @@ it M / mid, and warns not to change `update(n)`.
 | `cascade <repo> <issue> [--tiers a,b] [--cheap-max-turns N] [--no-handoff]` | tiers in order, handoff between them, per-stage costs | agent |
 | `demo [bug]` | seed a bench bug into a scratch copy for a live demo | 0 |
 
-Engine: the `claude` CLI in `-p` mode as a subprocess. No API keys, no SDK. `--output-format json` returns real
-`cost_usd` and token counts per call; that is where every number here comes from. `--strict-mcp-config` drops the
-CLI's fixed overhead from ~88k to ~7k tokens per call (a 10× cost difference we found by measuring).
+## Engines
 
-Requires Python 3.11+ and a logged-in `claude` CLI. No other dependencies.
+`preflight` drives an agent CLI as a subprocess. No API keys, no SDK; each CLI owns its own auth.
+Pick with `--engine` (or `PREFLIGHT_ENGINE`).
+
+| | `--engine claude` (default) | `--engine devin` |
+|---|---|---|
+| Binary | Claude Code CLI, `claude -p` | Devin CLI, `devin -p` |
+| Models | Claude only (`haiku`, `sonnet`, `opus`) | **48 families**: Claude, GPT-5.x, GLM, Gemini, DeepSeek, Kimi, Grok, SWE-1.6/2 |
+| Cost | **exact** `total_cost_usd` from `--output-format json` | **estimated**: tokens from the ATIF `--export`, priced at the list prices `devin models list` prints. Labelled `est` everywhere |
+| Turn budget (`--cheap-max-turns`) | hard, `--max-turns` | soft: stated in the prompt, no enforcement |
+| No-tools text calls (brief, handoff) | `--tools ""` | best-effort instruction; the model may still read files |
+| Overhead per call | ~7k tokens with `--strict-mcp-config` (88k without) | ~11–15k tokens |
+
+Why Devin matters here: it turns the cascade **cross-provider**. Haiku → Sonnet is a 3–5× price gap inside one
+vendor and haiku already solves everything. With Devin the cheap tier can be **GPT-5.6 Luna ($0.20/1M in)**, GLM,
+or **SWE-2 (free)** and the strong tier Sonnet or Opus: a 10–25× gap, a weaker cheap tier that actually fails,
+and one haiku-written brief handed to a different model family — is orientation portable across vendors?
+
+```bash
+python -m preflight --engine devin cascade <repo> ISSUE.md --tiers gpt-5.6-luna,sonnet
+python -m preflight --engine devin cascade <repo> ISSUE.md --tiers swe-2,opus
+python bench/run_bench.py --engine devin --cheap gpt-5.6-luna --strong sonnet --arms A_cold_strong,B_brief_cheap,C_cascade
+```
+
+Results from other engines / tier pairs are kept as separate arms (`B_brief_cheap@devin_gpt-5.6-luna-to-sonnet`) so
+exact and estimated dollars never get summed together. Gotcha we hit: when `preflight` itself runs inside a
+Devin/Windsurf session, the `devin` CLI inherits IDE env vars and reports "Not logged in"; `preflight/llm.py`
+scrubs them.
+
+Requires Python 3.11+ and a logged-in `claude` and/or `devin` CLI. No other dependencies.
 
 ## The experiment
 
@@ -180,7 +206,8 @@ preflight/
   run.py       one attempt in a fresh git-initialised copy; tests decide; captures diff + transcript
   handoff.py   failed attempt -> grounded post-mortem brief; strips hallucinated tool calls
   cascade.py   tiers in order, handoff between them, per-stage cost accounting
-  llm.py       `claude -p` wrapper: text + cost + tokens
+  llm.py       engine wrapper: `claude -p` (exact $) or `devin -p` (48 model families, $ estimated)
+  pricing.py   list-price table parsed from `devin models list`; tokens -> estimated $
   log.py       stage-by-stage progress to stderr
 bench/
   target/      calcx, the clean repo (21 tests)

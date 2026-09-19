@@ -65,8 +65,9 @@ def _record_live(a, r) -> None:
         runs = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
     except (OSError, ValueError):
         runs = []
+    from .llm import engine
     runs.append(dict(
-        when=time.strftime("%Y-%m-%d %H:%M:%S"), repo=Path(a.repo).name, issue=_issue(a.issue).strip(),
+        when=time.strftime("%Y-%m-%d %H:%M:%S"), engine=engine(), repo=Path(a.repo).name, issue=_issue(a.issue).strip(),
         tiers=a.tiers.split(","), cheap_max_turns=a.cheap_max_turns, passed=r.passed, cost=r.cost_usd,
         tokens=r.tokens, final_tier=r.final_tier, turns=sum(x.turns for x in r.attempts),
         seconds=sum(s.seconds for s in r.stages),
@@ -97,6 +98,7 @@ def cmd_demo(a):
     print(f'  python -m preflight scan    "{wd}" ISSUE.md')
     print(f'  python -m preflight brief   "{wd}" ISSUE.md')
     print(f'  python -m preflight cascade "{wd}" ISSUE.md --tiers haiku,sonnet --cheap-max-turns 3')
+    print(f'  python -m preflight --engine devin cascade "{wd}" ISSUE.md --tiers gpt-5.6-luna,sonnet   # cross-provider')
 
 
 def main(argv=None):
@@ -104,6 +106,9 @@ def main(argv=None):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")
     p = argparse.ArgumentParser(prog="preflight", description="Brief the agent, size the job, start cheap.")
+    p.add_argument("--engine", choices=("claude", "devin"), default=None,
+                   help="agent CLI to drive: claude (exact $) or devin (48 model families, $ estimated from list prices). "
+                        "Default: $PREFLIGHT_ENGINE or claude")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     b = sub.add_parser("brief", help="write BRIEF.md for a repo + issue")
@@ -135,6 +140,9 @@ def main(argv=None):
     d.add_argument("bug", nargs="?", default="power_assoc"); d.set_defaults(fn=cmd_demo)
 
     a = p.parse_args(argv)
+    if a.engine:
+        import os
+        os.environ["PREFLIGHT_ENGINE"] = a.engine
     a.fn(a)
 
 

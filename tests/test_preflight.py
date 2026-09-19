@@ -52,6 +52,41 @@ def test_handoff_sanitize_strips_fake_tool_calls():
     assert sanitize("## Start here\n- ok\n") == ("## Start here\n- ok", False)
 
 
+def test_pricing_parse_and_lookup():
+    from preflight import pricing
+    sample = """Available models (2 families)
+
+Claude Haiku 4.5 (claude-haiku-4.5)
+  aliases: haiku
+  MODEL_PRIVATE_11                                                         Claude Haiku 4.5 Medium  [200K context, $1 / 1M Input · $0.1 / 1M Cached input · $5 / 1M Output]
+
+SWE-2 (swe-2)
+  aliases: swe
+  swe-2-medium                                                             SWE-2  [262K context, Free]
+"""
+    t = pricing.parse(sample)
+    assert t["families"] == {"claude-haiku-4.5": "Claude Haiku 4.5", "swe-2": "SWE-2"}
+    p = pricing.lookup("Claude Haiku 4.5 Medium", t)
+    assert p and (p["in"], p["cached"], p["out"]) == (1.0, 0.1, 5.0) and p["family"] == "claude-haiku-4.5"
+    assert pricing.lookup("SWE-2", t)["in"] == 0.0
+    assert pricing.lookup("Claude Haiku 4.5 Medium Fast", t) is not None  # prefix match
+    assert pricing.lookup("Nonexistent 9", t) is None
+    # 10k fresh + 5k cached prompt tokens, 1k output at haiku prices
+    assert abs(pricing.estimate(15_000, 5_000, 1_000, p) - (10_000 * 1 + 5_000 * 0.1 + 1_000 * 5) / 1e6) < 1e-12
+    assert pricing.estimate(1, 0, 1, None) is None
+
+
+def test_engine_selection(monkeypatch):
+    from preflight import llm
+    monkeypatch.delenv("PREFLIGHT_ENGINE", raising=False)
+    assert llm.engine() == "claude"
+    monkeypatch.setenv("PREFLIGHT_ENGINE", "devin")
+    assert llm.engine() == "devin"
+    monkeypatch.setenv("PREFLIGHT_ENGINE", "gemini-cli")
+    with pytest.raises(RuntimeError):
+        llm.engine()
+
+
 def test_parse_size_tier():
     text = "## Start here\n- x\n\n## Size\n**M** - two files\n\n## Tier\nRecommended: mid, because...\n"
     assert parse_size_tier(text) == ("M", "mid")

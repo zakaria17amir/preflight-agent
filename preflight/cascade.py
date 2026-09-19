@@ -42,7 +42,9 @@ class CascadeResult:
         return next((s.model for s in reversed(self.stages) if s.passed is not None), "")
 
     def summary(self) -> str:
-        head = f"CASCADE {'PASS' if self.passed else 'FAIL'} total ${self.cost_usd:.4f} {self.tokens} tok"
+        from .llm import engine
+        est = " (est. from list prices)" if engine() == "devin" else ""
+        head = f"CASCADE {'PASS' if self.passed else 'FAIL'} total ${self.cost_usd:.4f}{est} {self.tokens} tok [{engine()}]"
         rows = [f"  - {s.name:<10} {s.model:<28} ${s.cost_usd:.4f} {s.tokens:>7} tok {s.seconds:>5.0f}s"
                 + ("" if s.passed is None else ("  PASS" if s.passed else "  FAIL")) for s in self.stages]
         return "\n".join([head, *rows])

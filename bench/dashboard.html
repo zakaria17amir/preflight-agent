@@ -36,6 +36,8 @@
   .tier { color:var(--dim); font-size:11px; }
   .tag { display:inline-block; padding:1px 7px; border-radius:999px; font-size:11px; border:1px solid var(--line); color:var(--dim); }
   .tag.haiku { color:var(--haiku); } .tag.sonnet { color:var(--sonnet); } .tag.opus { color:var(--opus); }
+  .tag.gpt { color:#5fd4e6; } .tag.swe { color:#c9f26b; } .tag.glm { color:#ff8bd1; } .tag.devin { color:#ffd166; border-color:#ffd166; }
+  .est { color:var(--dim); font-size:10px; vertical-align:super; }
   #detail { grid-column:span 12; display:none; }
   #detail.open { display:block; }
   #detail pre { background:#0b0d11; border:1px solid var(--line); border-radius:8px; padding:10px 12px; max-height:340px; overflow:auto; font-size:12px; white-space:pre-wrap; }
@@ -66,6 +68,9 @@
       <span><i style="background:var(--handoff)"></i>handoff</span>
       <span><i style="background:var(--sonnet)"></i>sonnet attempt</span>
       <span><i style="background:var(--opus)"></i>opus attempt</span>
+      <span><i style="background:#5fd4e6"></i>gpt attempt</span>
+      <span><i style="background:#c9f26b"></i>swe attempt</span>
+      <span class="muted">· <span class="tag devin">engine:tiers</span> = run on Devin CLI, $ estimated from list prices</span>
     </div>
   </section>
 
@@ -110,11 +115,17 @@ const ARM_META = {
 const ARM_COLORS = ['#4f8cff','#3ecf8e','#ffb547','#b678ff','#ff5c5c','#5fd4e6'];
 const BUG_SIZE = { report_counter:'S', fahrenheit:'S', power_assoc:'M', leading_dot:'M', unit_to_base:'L' };
 const $ = s => document.querySelector(s);
+const baseArm = a => a.split('@')[0];
+const armVariant = a => a.includes('@') ? a.split('@')[1] : '';
+const META = a => ARM_META[baseArm(a)] || [baseArm(a), ''];
+const armLabel = a => META(a)[0] + (armVariant(a) ? ` <span class="tag devin">${esc(armVariant(a))}</span>` : '');
+const engineOf = r => r.engine || 'claude';
 const fmt$ = v => '$' + (v ?? 0).toFixed(3);
 const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-const tierOf = m => /haiku/.test(m||'') ? 'haiku' : /sonnet/.test(m||'') ? 'sonnet' : /opus/.test(m||'') ? 'opus' : (m||'?');
+const tierOf = m => { m = (m||'').toLowerCase(); if (/haiku/.test(m)) return 'haiku'; if (/sonnet/.test(m)) return 'sonnet'; if (/opus/.test(m)) return 'opus';
+  if (/gpt/.test(m)) return 'gpt'; if (/glm/.test(m)) return 'glm'; if (/swe/.test(m)) return 'swe'; if (/gemini/.test(m)) return 'gemini'; if (/deepseek/.test(m)) return 'deepseek'; if (/kimi/.test(m)) return 'kimi'; return m.split(' ')[0] || '?'; };
 const stageKind = s => s.name.startsWith('brief') ? 'brief' : s.name.startsWith('handoff') ? 'handoff' : tierOf(s.model);
-const color = k => ({brief:'var(--brief)',handoff:'var(--handoff)',haiku:'var(--haiku)',sonnet:'var(--sonnet)',opus:'var(--opus)'}[k] || '#666');
+const color = k => ({brief:'var(--brief)',handoff:'var(--handoff)',haiku:'var(--haiku)',sonnet:'var(--sonnet)',opus:'var(--opus)',gpt:'#5fd4e6',glm:'#ff8bd1',swe:'#c9f26b',gemini:'#ffd166',deepseek:'#9b8cff',kimi:'#f4a261'}[k] || '#666');
 
 let RESULTS = {}, LIVE = [], selected = null;
 
@@ -136,7 +147,8 @@ function flat() {
   return rows;
 }
 const bugs = () => Object.keys(BUG_SIZE).filter(b => RESULTS[b]).concat(Object.keys(RESULTS).filter(b => !BUG_SIZE[b]));
-const arms = () => Object.keys(ARM_META).filter(a => flat().some(r => r.arm === a)).concat([...new Set(flat().map(r=>r.arm))].filter(a=>!ARM_META[a]));
+const arms = () => { const all = [...new Set(flat().map(r=>r.arm))]; const order = Object.keys(ARM_META);
+  return all.sort((a,b) => (a.includes('@')-b.includes('@')) || (order.indexOf(baseArm(a))-order.indexOf(baseArm(b))) || a.localeCompare(b)); };
 
 function render() {
   const rows = flat();
@@ -156,7 +168,7 @@ function renderKPIs(rows) {
   $('#kpis').innerHTML = [
     ['runs', rows.length, `${pass}/${rows.length} passed`],
     ['total spent', fmt$(total), `${bugs().length} bugs × ${arms().length} arms`],
-    ['cheapest 100% arm', cheapest ? ARM_META[cheapest[0]]?.[0] + ' · ' + fmt$(cheapest[1].cost) : '—', cheapest ? ARM_META[cheapest[0]]?.[1] : ''],
+    ['cheapest 100% arm', cheapest ? META(cheapest[0])[0] + ' · ' + fmt$(cheapest[1].cost) + (cheapest[0].includes('@') ? '<span class="est">est</span>' : '') : '—', cheapest ? (armVariant(cheapest[0]) || META(cheapest[0])[1]) : ''],
     ['vs sonnet cold', saving == null ? '—' : (saving >= 0 ? '−' : '+') + Math.abs(saving).toFixed(0) + '%', baseline ? 'baseline ' + fmt$(baseline.cost) : ''],
     ['escalations', escal, `${agentTurns} agent turns total`],
   ].map(([l, v, d]) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join('');
@@ -188,9 +200,9 @@ function renderArmCost(rows) {
   const groups = arms().map(arm => {
     const rs = rows.filter(r => r.arm === arm); const acc = {};
     for (const r of rs) for (const s of (r.stages||[])) { const k = stageKind(s); acc[k] = (acc[k]||0) + (s.cost||0); }
-    const order = ['brief','haiku','handoff','sonnet','opus'];
+    const order = ['brief','haiku','swe','glm','gpt','gemini','deepseek','kimi','handoff','sonnet','opus'];
     const pass = rs.filter(r=>r.passed).length;
-    return { name: ARM_META[arm]?.[0] || arm, sub: ARM_META[arm]?.[1] || '', pass, n: rs.length,
+    return { name: META(arm)[0] + (armVariant(arm) ? '*' : ''), sub: armVariant(arm) || META(arm)[1], pass, n: rs.length,
              segs: order.filter(k => acc[k]).map(k => ({v: acc[k], label: k, kind: k})) };
   });
   $('#armCost').innerHTML = svgBars(groups, { colorsFor: s => color(s.kind), labelFor: g => `${fmt$(g.segs.reduce((a,s)=>a+s.v,0))} · ${g.pass}/${g.n}` });
@@ -201,14 +213,14 @@ function renderBugCost(rows) {
   const groups = bugs().map(bug => ({ name: bug, sub: 'size ' + (BUG_SIZE[bug]||'?'),
     segs: A.map(arm => ({ v: (RESULTS[bug]?.[arm]?.cost) || 0, label: arm })) }));
   $('#bugCost').innerHTML = svgBars(groups, { stacked:false, colorsFor: (s, i) => ARM_COLORS[i % ARM_COLORS.length] });
-  $('#bugLegend').innerHTML = A.map((a,i)=>`<span><i style="background:${ARM_COLORS[i%ARM_COLORS.length]}"></i>${ARM_META[a]?.[0]||a} ${ARM_META[a]?.[1]||''}</span>`).join('');
+  $('#bugLegend').innerHTML = A.map((a,i)=>`<span><i style="background:${ARM_COLORS[i%ARM_COLORS.length]}"></i>${META(a)[0]} ${armVariant(a) || META(a)[1]}</span>`).join('');
 }
 
 function renderModels(rows) {
   const m = {};
   for (const r of rows) for (const s of (r.stages||[])) {
     const kind = stageKind(s), isAttempt = s.name.startsWith('attempt');
-    const key = isAttempt ? kind : `${kind} (${s.name.replace(/\d+$/,'')})`;
+    const key = (isAttempt ? kind : `${kind} (${s.name.replace(/\d+$/,'')})`) + (engineOf(r)==='devin' ? ' @devin' : '');
     const e = (m[key] ??= {calls:0, pass:0, attempts:0, cost:0, tokens:0, kind});
     e.calls++; e.cost += s.cost||0; e.tokens += s.tokens||0;
     if (isAttempt) { e.attempts++; e.pass += s.passed ? 1 : 0; }
@@ -225,16 +237,16 @@ function renderArms(rows) {
       const over = rs.reduce((a,r)=>a+(r.stages||[]).filter(s=>!s.name.startsWith('attempt')).reduce((b,s)=>b+(s.cost||0),0),0);
       const esc_ = rs.filter(r => (r.stages||[]).filter(s=>s.name.startsWith('attempt')).length > 1).length;
       const turns = rs.reduce((a,r)=>a+(r.turns||0),0)/n, secs = rs.reduce((a,r)=>a+(r.seconds||r.wall||0),0)/n;
-      return `<tr><td><b>${ARM_META[arm]?.[0]||arm}</b> <span class="muted">${ARM_META[arm]?.[1]||''}</span></td><td class="num">${rs.filter(r=>r.passed).length}/${rs.length}</td><td class="num">${fmt$(cost)}</td><td class="num">${fmt$(cost/n)}</td><td class="num">${fmt$(over)}</td><td class="num">${esc_}</td><td class="num">${turns.toFixed(1)}</td><td class="num">${secs.toFixed(0)}</td></tr>`; }).join('');
+      return `<tr><td><b>${META(arm)[0]}</b> <span class="muted">${META(arm)[1]}</span> ${armVariant(arm) ? `<span class="tag devin">${esc(armVariant(arm))}</span>` : ''}</td><td class="num">${rs.filter(r=>r.passed).length}/${rs.length}</td><td class="num">${fmt$(cost)}</td><td class="num">${fmt$(cost/n)}</td><td class="num">${fmt$(over)}</td><td class="num">${esc_}</td><td class="num">${turns.toFixed(1)}</td><td class="num">${secs.toFixed(0)}</td></tr>`; }).join('');
 }
 
 function renderMatrix() {
   const A = arms();
-  $('#matrix').innerHTML = `<tr><th>bug</th><th>size</th>${A.map(a=>`<th>${ARM_META[a]?.[0]||a} <span class="muted">${ARM_META[a]?.[1]||''}</span></th>`).join('')}</tr>` +
+  $('#matrix').innerHTML = `<tr><th>bug</th><th>size</th>${A.map(a=>`<th>${armLabel(a)} <span class="muted">${armVariant(a) ? '' : META(a)[1]}</span></th>`).join('')}</tr>` +
     bugs().map(bug => `<tr><td>${esc(bug)}</td><td>${BUG_SIZE[bug]||'?'}</td>` + A.map(arm => {
       const r = RESULTS[bug]?.[arm]; if (!r) return '<td class="muted">—</td>';
       const tier = r.final_tier ? tierOf(r.final_tier) : tierOf((r.stages||[]).filter(s=>s.name.startsWith('attempt')).at(-1)?.model);
-      return `<td><span class="cell ${r.passed?'pass':'fail'}" onclick="showDetail('${bug}','${arm}')">${r.passed?'PASS':'FAIL'} ${fmt$(r.cost)} <span class="tier">${tier}</span></span></td>`; }).join('') + '</tr>').join('');
+      return `<td><span class="cell ${r.passed?'pass':'fail'}" onclick="showDetail('${bug}','${arm.replace(/'/g,"\'")}')">${r.passed?'PASS':'FAIL'} ${fmt$(r.cost)}${r.cost_estimated?'<span class="est">est</span>':''} <span class="tier">${tier}</span></span></td>`; }).join('') + '</tr>').join('');
 }
 
 function stageBar(stages) {
@@ -246,7 +258,7 @@ function showDetail(bug, arm, scroll=true) {
   const r = RESULTS[bug]?.[arm]; if (!r) return; selected = {bug, arm};
   const d = $('#detail'); d.classList.add('open');
   d.innerHTML = `<span class="close" onclick="document.getElementById('detail').classList.remove('open');selected=null">✕ close</span>
-    <h2>${esc(bug)} · ${ARM_META[arm]?.[0]||arm} <span class="muted">${ARM_META[arm]?.[1]||''}</span> — <span class="${r.passed?'pass':'fail'} cell">${r.passed?'PASS':'FAIL'}</span> ${fmt$(r.cost)} · ${(r.tokens/1000).toFixed(0)}k tok · ${r.turns} turns · ${Math.round(r.wall||r.seconds||0)}s</h2>
+    <h2>${esc(bug)} · ${armLabel(arm)} <span class="muted">${META(arm)[1]}</span> — <span class="${r.passed?'pass':'fail'} cell">${r.passed?'PASS':'FAIL'}</span> ${fmt$(r.cost)}${r.cost_estimated?'<span class="est">est</span>':''} · ${(r.tokens/1000).toFixed(0)}k tok · ${r.turns} turns · ${Math.round(r.wall||r.seconds||0)}s · engine <span class="tag ${engineOf(r)==='devin'?'devin':''}">${engineOf(r)}</span></h2>
     <div class="stages">${stageBar(r.stages||[])}
       <table><tr><th>stage</th><th>model</th><th class="num">$</th><th class="num">tokens</th><th>result</th></tr>
       ${(r.stages||[]).map(s=>`<tr><td>${esc(s.name)}</td><td><span class="tag ${stageKind(s)}">${esc(s.model)}</span></td><td class="num">${fmt$(s.cost)}</td><td class="num">${(s.tokens/1000).toFixed(0)}k</td><td>${s.passed==null?'<span class="muted">—</span>':s.passed?'<span class="pass cell">PASS</span>':'<span class="fail cell">FAIL</span>'}</td></tr>`).join('')}</table>
@@ -263,8 +275,8 @@ function showDetail(bug, arm, scroll=true) {
 
 function renderLive() {
   if (!LIVE.length) { $('#liveRuns').innerHTML = '<tr><td class="muted">No live runs yet. Run <code>python -m preflight cascade …</code> and they appear here.</td></tr>'; return; }
-  $('#liveRuns').innerHTML = `<tr><th>when</th><th>repo</th><th>issue</th><th>tiers</th><th>cap</th><th>result</th><th class="num">$</th><th>stages</th></tr>` +
-    [...LIVE].reverse().slice(0, 25).map(r => `<tr><td>${esc(r.when)}</td><td>${esc(r.repo)}</td><td title="${esc(r.issue)}">${esc((r.issue||'').slice(0,60))}${(r.issue||'').length>60?'…':''}</td><td>${esc((r.tiers||[]).join(' → '))}</td><td>${r.cheap_max_turns??'—'}</td><td><span class="cell ${r.passed?'pass':'fail'}">${r.passed?'PASS':'FAIL'} <span class="tier">${tierOf(r.final_tier)}</span></span></td><td class="num">${fmt$(r.cost)}</td><td style="min-width:160px">${stageBar(r.stages||[])}</td></tr>`).join('');
+  $('#liveRuns').innerHTML = `<tr><th>when</th><th>engine</th><th>repo</th><th>issue</th><th>tiers</th><th>cap</th><th>result</th><th class="num">$</th><th>stages</th></tr>` +
+    [...LIVE].reverse().slice(0, 25).map(r => `<tr><td>${esc(r.when)}</td><td><span class="tag ${engineOf(r)==='devin'?'devin':''}">${engineOf(r)}</span></td><td>${esc(r.repo)}</td><td title="${esc(r.issue)}">${esc((r.issue||'').slice(0,60))}${(r.issue||'').length>60?'…':''}</td><td>${esc((r.tiers||[]).join(' → '))}</td><td>${r.cheap_max_turns??'—'}</td><td><span class="cell ${r.passed?'pass':'fail'}">${r.passed?'PASS':'FAIL'} <span class="tier">${tierOf(r.final_tier)}</span></span></td><td class="num">${fmt$(r.cost)}${engineOf(r)==='devin'?'<span class="est">est</span>':''}</td><td style="min-width:160px">${stageBar(r.stages||[])}</td></tr>`).join('');
 }
 
 load(); setInterval(load, 4000);
