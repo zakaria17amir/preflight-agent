@@ -55,6 +55,31 @@
   .muted { color:var(--dim); }
   .close { float:right; cursor:pointer; color:var(--dim); }
   .empty { color:var(--dim); padding:20px; text-align:center; }
+  /* side panel: live step tracker */
+  body.has-side main { padding-right:372px; }
+  #side { position:fixed; top:0; right:0; width:344px; height:100vh; overflow:auto; background:#12151b; border-left:1px solid var(--line); padding:16px 16px 24px; display:none; z-index:5; }
+  #side.open { display:block; }
+  #side h2 { margin:0 0 4px; font-size:13px; text-transform:uppercase; letter-spacing:.8px; color:var(--dim); }
+  #side .title { font-weight:600; margin:6px 0 2px; word-break:break-word; }
+  #side .meta { color:var(--dim); font-size:12px; margin-bottom:12px; }
+  #side .issue { font-size:12px; color:var(--dim); border-left:2px solid var(--line); padding-left:8px; margin:0 0 14px; max-height:72px; overflow:hidden; }
+  .step { display:grid; grid-template-columns:18px 1fr; gap:10px; padding:8px 0; border-top:1px solid var(--line); }
+  .step .ico { width:14px; height:14px; border-radius:50%; margin-top:3px; border:2px solid var(--line); }
+  .step.running .ico { border-color:var(--handoff); border-top-color:transparent; animation:spin 1s linear infinite; }
+  .step.done .ico, .step.pass .ico { background:var(--haiku); border-color:var(--haiku); }
+  .step.fail .ico { background:var(--fail); border-color:var(--fail); }
+  .step.pending { opacity:.45; }
+  .step .name { font-weight:600; font-size:13px; }
+  .step .name small { color:var(--dim); font-weight:400; margin-left:6px; }
+  .step .detail { color:var(--dim); font-size:12px; }
+  .step .sum { font-size:12px; margin-top:4px; line-height:1.4; }
+  .step.running .sum { color:var(--handoff); }
+  #side .final { margin-top:12px; padding:10px 12px; border-radius:8px; font-size:13px; }
+  #side .final.pass { background:rgba(62,207,142,.12); color:var(--haiku); } #side .final.fail { background:rgba(255,92,92,.12); color:var(--fail); }
+  #side .foot { color:var(--dim); font-size:11px; margin-top:12px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @keyframes pulse { 50% { opacity:.4; } }
+  #side .live-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--handoff); margin-right:6px; animation:pulse 1.2s ease-in-out infinite; }
 </style>
 </head>
 <body>
@@ -62,9 +87,11 @@
   <h1>preflight</h1>
   <span class="sub">brief the agent · size the job · start cheap — results dashboard</span>
   <a class="repo" href="https://github.com/zakaria17amir/preflight-agent" target="_blank" rel="noopener">github ↗</a>
+  <a class="repo" href="#" id="sideToggle" style="display:none">run tracker</a>
   <span class="live">● <b id="status">connecting</b> <span id="updated"></span></span>
 </header>
 <div class="banner" id="banner" style="display:none"></div>
+<aside id="side"></aside>
 <main>
   <section class="kpis" id="kpis"></section>
 
@@ -147,11 +174,13 @@ const STATIC = !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) || 
 
 async function load() {
   try {
-    const [r, l] = await Promise.all([
+    const [r, l, pg] = await Promise.all([
       fetch('results/results.json?t=' + Date.now()).then(x => x.ok ? x.json() : {}),
       fetch('results/live.json?t=' + Date.now()).then(x => x.ok ? x.json() : []).catch(() => []),
+      fetch('results/progress.json?t=' + Date.now()).then(x => x.ok ? x.json() : null).catch(() => null),
     ]);
     RESULTS = r; LIVE = Array.isArray(l) ? l : [];
+    renderSide(pg);
     if (STATIC) {
       BUILD = BUILD || await fetch('results/meta.json').then(x => x.ok ? x.json() : null).catch(() => null);
       const latest = LIVE.length ? LIVE[LIVE.length-1].when : '';
@@ -304,6 +333,37 @@ function renderLive() {
   if (!LIVE.length) { $('#liveRuns').innerHTML = '<tr><td class="muted">No live runs yet. Run <code>python -m preflight cascade …</code> and they appear here.</td></tr>'; return; }
   $('#liveRuns').innerHTML = `<tr><th>when</th><th>engine</th><th>repo</th><th>issue</th><th>tiers</th><th>cap</th><th>result</th><th class="num">$</th><th>stages</th></tr>` +
     [...LIVE].reverse().slice(0, 25).map(r => `<tr><td>${esc(r.when)}</td><td><span class="tag ${engineOf(r)==='devin'?'devin':''}">${engineOf(r)}</span></td><td>${esc(r.repo)}</td><td title="${esc(r.issue)}">${esc((r.issue||'').slice(0,60))}${(r.issue||'').length>60?'…':''}</td><td>${esc((r.tiers||[]).join(' → '))}</td><td>${r.cheap_max_turns??'—'}</td><td><span class="cell ${r.passed?'pass':'fail'}">${r.passed?'PASS':'FAIL'} <span class="tier">${tierOf(r.final_tier)}</span></span></td><td class="num">${fmt$(r.cost)}${engineOf(r)==='devin'?'<span class="est">est</span>':''}</td><td style="min-width:160px">${stageBar(r.stages||[])}</td></tr>`).join('');
+}
+
+const STEP_LABEL = { scan:'Scan', brief:'Brief', attempt1:'Attempt 1', handoff:'Handoff', attempt2:'Attempt 2', attempt3:'Attempt 3' };
+let sideHidden = false;
+function renderSide(pg) {
+  const side = $('#side'), toggle = $('#sideToggle');
+  const fresh = pg && (pg.status === 'running' || (Date.now()/1000 - (pg.finished || pg.updated || 0)) < 3600);
+  if (!pg || !fresh) { side.classList.remove('open'); document.body.classList.remove('has-side'); toggle.style.display = 'none'; return; }
+  toggle.style.display = ''; toggle.textContent = sideHidden ? 'show run tracker' : 'hide run tracker';
+  toggle.onclick = e => { e.preventDefault(); sideHidden = !sideHidden; renderSide(pg); };
+  if (sideHidden) { side.classList.remove('open'); document.body.classList.remove('has-side'); return; }
+  side.classList.add('open'); document.body.classList.add('has-side');
+  const planned = ['scan', 'brief', ...pg.tiers.flatMap((t, i) => i ? ['handoff', `attempt${i+1}`] : ['attempt1'])];
+  const seen = new Set(pg.steps.map(s => s.name));
+  const running = pg.status === 'running';
+  // steps that never started (e.g. attempt 1 passed so handoff/attempt2 were skipped) are shown pending only while running
+  const rows = pg.steps.map(s => stepRow(s)).concat(running ? planned.filter(n => !seen.has(n)).map(n => stepRow({name:n, status:'pending'})) : []);
+  const elapsed = Math.round(((pg.finished || Date.now()/1000) - pg.started));
+  side.innerHTML = `<h2>${running ? '<span class="live-dot"></span>Running now' : 'Last run'}</h2>
+    <div class="title">${esc(pg.title)}</div>
+    <div class="meta">engine <span class="tag ${pg.engine==='devin'?'devin':''}">${esc(pg.engine)}</span> · tiers ${esc(pg.tiers.join(' → '))} · ${elapsed}s · ${fmt$(pg.total_cost)}${pg.engine==='devin'?'<span class="est">est</span>':''}</div>
+    <div class="issue">${esc(pg.issue)}</div>
+    ${rows.join('')}
+    ${pg.status !== 'running' ? `<div class="final ${pg.passed?'pass':'fail'}">${pg.passed ? '✓' : '✗'} ${esc(pg.final_summary||'')}</div>` : ''}
+    <div class="foot">${running ? 'updates every 4s from bench/results/progress.json' : `finished ${new Date(pg.finished*1000).toLocaleTimeString()}`}</div>`;
+}
+function stepRow(s) {
+  const model = s.detail ? `<small>${esc(s.detail)}</small>` : '';
+  const timing = s.seconds != null ? `<small>${s.seconds}s${s.cost ? ' · ' + fmt$(s.cost) : ''}</small>` : '';
+  const sum = s.status === 'running' ? 'working…' : (s.summary || '');
+  return `<div class="step ${s.status}"><div class="ico"></div><div><div class="name">${STEP_LABEL[s.name] || esc(s.name)}${timing}</div>${s.status==='pending'?'':`<div class="detail">${model}</div>`}${sum ? `<div class="sum">${esc(sum)}</div>` : ''}</div></div>`;
 }
 
 async function loadTranscript() {

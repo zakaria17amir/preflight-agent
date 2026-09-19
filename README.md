@@ -46,6 +46,23 @@ conventions, sometimes editing the wrong module), and every task gets the **fron
 
 ## Live demo (about 2 minutes)
 
+**Against a real GitHub issue** — [zakaria17amir/calcx-demo#1](https://github.com/zakaria17amir/calcx-demo/issues/1)
+is a public repo with a planted bug and a human-written issue. `preflight` clones it, pulls the issue via `gh`, and runs:
+
+```bash
+python bench/dashboard.py                    # terminal 1: dashboard, with the run tracker side panel
+python -m preflight cascade https://github.com/zakaria17amir/calcx-demo/issues/1 --tiers haiku,sonnet --cheap-max-turns 2
+```
+
+The dashboard's **run tracker** (right side) shows which step is running and a one-line conclusion after each:
+scan → brief (size, tier, start-here file) → attempt 1 (pass/fail, what changed, why) → handoff (why it failed,
+next hypothesis) → attempt 2 → final. Recorded result of that exact run: 61 s, $0.13, haiku failed on a 2-call
+budget, handoff, sonnet fixed `parser.py`, patch written to `PATCH.diff`.
+
+Any GitHub repo works: `preflight cascade https://github.com/owner/repo "issue text"` or `... #12`.
+
+**Against a local scratch repo** (no network):
+
 ```bash
 python -m preflight demo power_assoc        # seeds a bug into a scratch copy of calcx, writes ISSUE.md
 python -m preflight scan  <scratch> ISSUE.md      # zero tokens: right file ranked first
@@ -72,6 +89,9 @@ it M / mid, and warns not to change `update(n)`.
 | `handoff <issue> <brief> <log> [--repo R]` | failed attempt → structured post-mortem brief (v2), grounded on the scan | ~9k |
 | `cascade <repo> <issue> [--tiers a,b] [--cheap-max-turns N] [--no-handoff]` | tiers in order, handoff between them, per-stage costs | agent |
 | `demo [bug]` | seed a bench bug into a scratch copy for a live demo | 0 |
+
+`<repo>` is a local path, a GitHub repo URL, or a GitHub issue URL (cloned shallow; issue fetched with `gh`).
+`<issue>` is text, a file, an issue URL, or `#N`. A passing run writes `PATCH.diff` for `git apply`.
 
 ## Engines
 
@@ -244,6 +264,8 @@ preflight/
   run.py       one attempt in a fresh git-initialised copy; tests decide; captures diff + transcript
   handoff.py   failed attempt -> grounded post-mortem brief; strips hallucinated tool calls
   cascade.py   tiers in order, handoff between them, per-stage cost accounting
+  github.py    GitHub repo/issue URLs -> shallow clone + issue text via `gh`
+  progress.py  step tracker -> bench/results/progress.json for the dashboard side panel
   llm.py       engine wrapper: `claude -p` (exact $) or `devin -p` (48 model families, $ estimated)
   pricing.py   list-price table parsed from `devin models list`; tokens -> estimated $
   log.py       stage-by-stage progress to stderr

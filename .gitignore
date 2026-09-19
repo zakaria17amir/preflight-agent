@@ -8,3 +8,4 @@ bench/results/*.log
 /PATCH.diff
 .devin/*
 site/
+/bench/results/progress.json

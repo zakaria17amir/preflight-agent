@@ -11,21 +11,32 @@ def _issue(arg: str) -> str:
     return Path(arg).read_text(encoding="utf-8") if Path(arg).is_file() else arg
 
 
+def _target(a):
+    """(repo path, issue text, display name) from local paths or GitHub repo/issue URLs."""
+    from .github import resolve
+    root, issue, name = resolve(a.repo, a.issue)
+    a.repo, a.issue, a.name = str(root), issue, name
+    return root, issue
+
+
 def cmd_brief(a):
     from .brief import make_brief
-    text, res, _ = make_brief(Path(a.repo), _issue(a.issue), model=a.model)
+    root, issue = _target(a)
+    text, res, _ = make_brief(root, issue, model=a.model)
     Path(a.out).write_text(text, encoding="utf-8")
     say(f"wrote {a.out}")
 
 
 def cmd_scan(a):
     from .scan import render, scan
-    print(render(scan(Path(a.repo), _issue(a.issue))))
+    root, issue = _target(a)
+    print(render(scan(root, issue)))
 
 
 def cmd_run(a):
     from .run import attempt
-    r = attempt(Path(a.repo), _issue(a.issue), brief=Path(a.brief).read_text(encoding="utf-8") if a.brief else None,
+    root, issue = _target(a)
+    r = attempt(root, issue, brief=Path(a.brief).read_text(encoding="utf-8") if a.brief else None,
                 model=a.model, test_cmd=a.test_cmd, max_turns=a.max_turns)
     print(r.summary())
     print(f"scratch copy kept at: {r.workdir}")
@@ -44,8 +55,13 @@ def cmd_handoff(a):
 
 def cmd_cascade(a):
     from .cascade import cascade
-    r = cascade(Path(a.repo), _issue(a.issue), tiers=a.tiers.split(","), test_cmd=a.test_cmd, use_brief=not a.no_brief,
-                use_handoff=not a.no_handoff, cheap_max_turns=a.cheap_max_turns)
+    from .llm import engine
+    from .progress import Progress
+    root, issue = _target(a)
+    tiers = a.tiers.split(",")
+    prog = Progress(title=a.name, repo=a.name, issue=issue, engine=engine(), tiers=tiers)
+    r = cascade(root, issue, tiers=tiers, test_cmd=a.test_cmd, use_brief=not a.no_brief,
+                use_handoff=not a.no_handoff, cheap_max_turns=a.cheap_max_turns, progress=prog)
     if r.brief:
         Path("BRIEF.md").write_text(r.brief, encoding="utf-8")
     if r.handoff:
@@ -77,7 +93,7 @@ def _record_live(a, r) -> None:
         runs = []
     from .llm import engine
     runs.append(dict(
-        when=time.strftime("%Y-%m-%d %H:%M:%S"), engine=engine(), repo=Path(a.repo).name, issue=_issue(a.issue).strip(),
+        when=time.strftime("%Y-%m-%d %H:%M:%S"), engine=engine(), repo=a.name, issue=a.issue.strip(),
         tiers=a.tiers.split(","), cheap_max_turns=a.cheap_max_turns, passed=r.passed, cost=r.cost_usd,
         tokens=r.tokens, final_tier=r.final_tier, turns=sum(x.turns for x in r.attempts),
         seconds=sum(s.seconds for s in r.stages),
@@ -122,15 +138,16 @@ def main(argv=None):
     sub = p.add_subparsers(dest="cmd", required=True)
 
     b = sub.add_parser("brief", help="write BRIEF.md for a repo + issue")
-    b.add_argument("repo"); b.add_argument("issue", help="issue text or path to a file")
+    b.add_argument("repo", help="local path, GitHub repo URL, or GitHub issue URL")
+    b.add_argument("issue", nargs="?", help="issue text, a file, a GitHub issue URL, or #N")
     b.add_argument("--model", default="haiku"); b.add_argument("-o", "--out", default="BRIEF.md")
     b.set_defaults(fn=cmd_brief)
 
     s = sub.add_parser("scan", help="show the zero-token repo scan the brief is built from")
-    s.add_argument("repo"); s.add_argument("issue"); s.set_defaults(fn=cmd_scan)
+    s.add_argument("repo"); s.add_argument("issue", nargs="?"); s.set_defaults(fn=cmd_scan)
 
     r = sub.add_parser("run", help="one agent attempt, verified by tests (works on a temp copy)")
-    r.add_argument("repo"); r.add_argument("issue"); r.add_argument("--brief"); r.add_argument("--model", default="haiku")
+    r.add_argument("repo"); r.add_argument("issue", nargs="?"); r.add_argument("--brief"); r.add_argument("--model", default="haiku")
     r.add_argument("--test-cmd", default=None); r.add_argument("--max-turns", type=int, default=None)
     r.set_defaults(fn=cmd_run)
 
@@ -140,7 +157,8 @@ def main(argv=None):
     h.add_argument("-o", "--out", default="BRIEF.v2.md"); h.set_defaults(fn=cmd_handoff)
 
     c = sub.add_parser("cascade", help="cheap tier first, escalate with handoff on failure")
-    c.add_argument("repo"); c.add_argument("issue"); c.add_argument("--tiers", default="haiku,sonnet")
+    c.add_argument("repo", help="local path, GitHub repo URL, or GitHub issue URL")
+    c.add_argument("issue", nargs="?", help="issue text, a file, a GitHub issue URL, or #N"); c.add_argument("--tiers", default="haiku,sonnet")
     c.add_argument("--test-cmd", default=None); c.add_argument("--no-brief", action="store_true")
     c.add_argument("--no-handoff", action="store_true")
     c.add_argument("--cheap-max-turns", type=int, default=None, help="turn budget for every tier except the last")
