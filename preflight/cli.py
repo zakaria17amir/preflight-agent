@@ -49,10 +49,33 @@ def cmd_cascade(a):
         Path("BRIEF.md").write_text(r.brief, encoding="utf-8")
     if r.handoff:
         Path("BRIEF.v2.md").write_text(r.handoff, encoding="utf-8")
+    _record_live(a, r)
     print()
     print(r.summary())
     if r.attempts:
         print(f"final scratch copy: {r.attempts[-1].workdir}")
+
+
+def _record_live(a, r) -> None:
+    """Append this cascade run to bench/results/live.json so the dashboard shows it."""
+    import json
+    import time
+    path = Path(__file__).resolve().parents[1] / "bench" / "results" / "live.json"
+    try:
+        runs = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+    except (OSError, ValueError):
+        runs = []
+    runs.append(dict(
+        when=time.strftime("%Y-%m-%d %H:%M:%S"), repo=Path(a.repo).name, issue=_issue(a.issue).strip(),
+        tiers=a.tiers.split(","), cheap_max_turns=a.cheap_max_turns, passed=r.passed, cost=r.cost_usd,
+        tokens=r.tokens, final_tier=r.final_tier, turns=sum(x.turns for x in r.attempts),
+        seconds=sum(s.seconds for s in r.stages),
+        stages=[dict(name=s.name, model=s.model, cost=s.cost_usd, tokens=s.tokens, passed=s.passed) for s in r.stages],
+        brief=r.brief, handoff=r.handoff, summary=r.attempts[-1].agent_summary[:600] if r.attempts else "",
+    ))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(runs, indent=1), encoding="utf-8")
+    say(f"recorded to {path.relative_to(Path.cwd()) if path.is_relative_to(Path.cwd()) else path} (dashboard: python bench/dashboard.py)")
 
 
 def cmd_demo(a):
