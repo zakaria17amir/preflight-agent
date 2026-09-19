@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "bash scripts/build_site.sh",
+  "outputDirectory": "site",
+  "installCommand": "",
+  "cleanUrls": true,
+  "headers": [
+    { "source": "/results/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=60" }] }
+  ]
+}

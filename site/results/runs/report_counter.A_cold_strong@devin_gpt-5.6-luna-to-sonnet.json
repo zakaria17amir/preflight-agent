@@ -1,0 +1,25 @@
+{
+ "passed": true,
+ "cost": 0.0423588,
+ "tokens": 102196,
+ "turns": 6,
+ "seconds": 15.684523582458496,
+ "stages": [
+  {
+   "name": "attempt1",
+   "model": "sonnet",
+   "cost": 0.0423588,
+   "tokens": 102196,
+   "passed": true
+  }
+ ],
+ "tests": "21 passed in 0.04s",
+ "summary": "Found it: the check uses `\"Error:\"` (capital E) but errors are formatted as lowercase `\"error: ...\"`.Files changed: `calcx/report.py`\nRoot cause: the \"ok\" summary check compared error rows against the string prefix `\"Error:\"` (capitalized) while `evaluate_batch` actually formats errors as `\"error: ...\"` (lowercase), so the case mismatch meant no row was ever excluded from the \"ok\" count.\nTest status: all 21 tests pass.",
+ "wall": 17.632078170776367,
+ "engine": "devin",
+ "tiers": [
+  "gpt-5.6-luna",
+  "sonnet"
+ ],
+ "cost_estimated": true
+}

@@ -1,0 +1,29 @@
+{
+ "passed": true,
+ "cost": 0.0638214,
+ "tokens": 175675,
+ "turns": 8,
+ "seconds": 40.01788416671753,
+ "stages": [
+  {
+   "name": "brief",
+   "model": "claude-haiku-4-5-20251001",
+   "cost": 0.0089605,
+   "tokens": 8225,
+   "passed": null
+  },
+  {
+   "name": "attempt1",
+   "model": "haiku",
+   "cost": 0.054860900000000004,
+   "tokens": 167450,
+   "passed": true
+  }
+ ],
+ "tests": "21 passed in 0.04s",
+ "summary": "Perfect! All 21 tests pass, including the critical test `test_format_report_counts_errors_as_not_ok`. \n\n**Summary:**\n- **File changed:** `calcx/report.py` line 33\n- **Root cause:** Case mismatch in error detection \u2014 the code checked for `\"Error:\"` (capital E) but errors were formatted as `\"error:\"` (lowercase e) in `evaluate_batch()`, causing errors to not be recognized and counted as \"ok\"\n- **Test status:** All 21 tests passing \u2713",
+ "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0090 | tokens=8225 | size=S tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n\n1. **calcx/report.py** \u2014 contains `format_report()` which generates the summary line; likely counting errors as ok.\n2. **tests/test_calcx.py** \u2014 identify which test covers batch evaluation and summary formatting to verify the fix.\n3. **calcx/evaluator.py** \u2014 check how errors are represented in results (exception, error string, sentinel value?).\n\n## Conventions\n\n- Python with type hints; preserve them.\n- Errors in results likely returned as tuples of `(expr, error_msg)` \u2014 confirm the detection logic.\n- pytest for testing; tests live in `tests/`.\n\n## Verify\n\n```\npytest -q\n```\n\nLook for tests in `test_calcx.py` that cover `evaluate_batch()` or `format_report()` with mixed success/error inputs. Verify the summary line counts only successful rows as \"ok\".\n\n## Risks\n\n- Don't change the result tuple format without checking all callers.\n- The error detection logic must distinguish between a valid result value and an error message (likely by type or structure).\n- Tokenizer, parser, and evaluator internals should not be modified.\n\n## Size\n\n**S** \u2014 Bug is isolated to the summary-line logic in `format_report()` or `evaluate_batch()`, a single-file fix counting logic.\n\n## Tier\n\n**cheap** \u2014 Straightforward counting/filtering bug, no cross-module design changes needed, low risk.\n",
+ "handoff": "",
+ "final_tier": "haiku",
+ "wall": 43.79512643814087
+}

@@ -1,0 +1,36 @@
+{
+ "passed": true,
+ "cost": 0.21181429999999998,
+ "tokens": 445002,
+ "turns": 16,
+ "seconds": 74.6018350944519,
+ "stages": [
+  {
+   "name": "brief",
+   "model": "claude-haiku-4-5-20251001",
+   "cost": 0.0105495,
+   "tokens": 8540,
+   "passed": null
+  },
+  {
+   "name": "attempt1",
+   "model": "haiku",
+   "cost": 0.0373328,
+   "tokens": 101511,
+   "passed": false
+  },
+  {
+   "name": "attempt2",
+   "model": "sonnet",
+   "cost": 0.163932,
+   "tokens": 334951,
+   "passed": true
+  }
+ ],
+ "tests": "21 passed in 0.04s",
+ "summary": "All fixed and verified.\n\n**Files changed:** `calcx/units.py`, `calcx/report.py`\n\n**Root cause:** `convert()` returned `to_base(q)` (the base-unit value) instead of converting it back to the target unit with `from_base()`, so results were only correct when the target happened to be the base unit; separately, `evaluate_batch()`'s broad `except ValueError` caught `UnitError` (a `ValueError` subclass) before it could be handled distinctly, replacing its message with a generic \"cannot convert\" string.\n\n**Test status:** All 21 tests pass; manually verified `to(2500, m, km)` \u2192 2.5, `to(1, mi, km)` \u2192 ",
+ "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0105 | tokens=8540 | size=M tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n- **calcx/units.py** \u2014 contains unit conversion logic; issue is conversions fail when target is non-base unit\n- **tests/test_calcx.py** \u2014 baseline tests; need to verify current behavior and add coverage for reverse conversions\n- **calcx/report.py** \u2014 batch report error handling; UnitError likely being caught and re-wrapped generically\n- **calcx/evaluator.py** \u2014 where `to()` function is evaluated; check how UnitError is raised/propagated\n- **calcx/__init__.py** \u2014 public API entry point; verify `calc()` call signature and error contract\n\n## Conventions\n- Type hints required (preserve all existing annotations)\n- Tests in `tests/` directory; use pytest assertions\n- Recursive-descent parser pattern (don't refactor parsing layer)\n- Error types matter: UnitError should propagate through batch operations, not be swallowed\n\n## Verify\n```bash\npytest -q\n```\nSpecific tests to validate: `to(2500, m, km)` must return 2.5, `to(1, mi, km)` must return ~1.609, batch report with bad unit must raise/report UnitError not generic error.\n\n## Risks\n- Conversion direction logic (multiply vs divide by factor) \u2014 test both directions after fix\n- Batch error handling may mask UnitError in other places; audit all `except` blocks that catch it\n- Units may have complex relationships beyond simple base-unit factors; don't assume linear scaling\n\n## Size\n**M** \u2014 Unit conversion fix (units.py) + error propagation in batch reporting (report.py) + evaluator error handling, spanning 2-3 modules but confined to unit system logic.\n\n## Tier\n**cheap** \u2014 Likely a sign error or missing reciprocal in conversion factor math, and error re-wrapping. No architectural changes needed.\n",
+ "handoff": "",
+ "final_tier": "sonnet",
+ "wall": 80.30329370498657
+}

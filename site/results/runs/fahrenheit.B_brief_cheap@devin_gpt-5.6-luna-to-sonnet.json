@@ -1,0 +1,32 @@
+{
+ "passed": true,
+ "cost": 0.01050424,
+ "tokens": 157049,
+ "turns": 8,
+ "seconds": 35.53149209213257,
+ "stages": [
+  {
+   "name": "brief",
+   "model": "Claude Haiku 4.5",
+   "cost": 0.0049242,
+   "tokens": 15697
+  },
+  {
+   "name": "attempt1",
+   "model": "gpt-5.6-luna",
+   "cost": 0.00558004,
+   "tokens": 141352,
+   "passed": true
+  }
+ ],
+ "tests": "21 passed in 0.03s",
+ "summary": "Files changed: `calcx/units.py`\nRoot cause: Fahrenheit conversion from Kelvin used `5 / 9` instead of `9 / 5`.\nTest status: `python -m pytest -q` \u2014 21 passed.",
+ "brief": "<!-- preflight brief | model=Claude Haiku 4.5 | cost=$0.0049 | tokens=15697 | size=S tier=cheap | heuristic_size=S -->\n# Brief\n\nI'll write a delegation brief for this Celsius-to-Fahrenheit conversion bug based on the provided information.\n\n## Start here\n\n1. **calcx/units.py** \u2014 Contains unit conversion logic; the bug is specifically in Fahrenheit conversion\n2. **tests/test_calcx.py** \u2014 Verify existing tests and understand expected behavior for C\u2192F\n3. **calcx/evaluator.py** \u2014 May call unit conversion; check how `to()` function routes conversions\n4. **calcx/parser.py** \u2014 Understand how `to(2.5, km, m)` syntax is parsed into conversion calls\n5. **calcx/__init__.py** \u2014 Entry point; confirms `calc()` is the public API\n\n## Conventions\n\n- Python with type hints; preserve them in any changes\n- Tests live in `tests/` directory\n- Run tests with `pytest -q`\n- Follow existing code style in units.py (likely function-based or class-based converters)\n\n## Verify\n\n**Test command:** `python -m pytest -q`\n\n**Proof of fix:** \n- Existing test for `to(100, \"C\", \"F\")` should return 212 (or add one if missing)\n- Confirm C\u2192K still works (mentioned as correct in issue)\n- Run full test suite to ensure no regressions\n\n## Risks\n\n- **Do not touch:** tokenizer.py, parser.py, evaluator.py structure (unless conversion routing is broken, which seems unlikely given C\u2192K works)\n- Offset-based conversions (C/F/K) are tricky; verify the formula handles both scale and offset correctly\n- Ensure bidirectional conversion (F\u2192C) is also fixed if broken\n\n## Size\n\n**S** \u2014 Single-file fix in units.py; the bug is isolated to one conversion formula.\n\n## Tier\n\n**cheap** \u2014 Straightforward arithmetic bug in a conversion function; no architectural changes needed.\n",
+ "wall": 37.29782247543335,
+ "engine": "devin",
+ "tiers": [
+  "gpt-5.6-luna",
+  "sonnet"
+ ],
+ "cost_estimated": true
+}

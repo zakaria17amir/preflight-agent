@@ -1,0 +1,29 @@
+{
+ "passed": true,
+ "cost": 0.06246,
+ "tokens": 123151,
+ "turns": 6,
+ "seconds": 48.44484786605835,
+ "stages": [
+  {
+   "name": "brief",
+   "model": "claude-haiku-4-5-20251001",
+   "cost": 0.0068532,
+   "tokens": 8066,
+   "passed": null
+  },
+  {
+   "name": "attempt1",
+   "model": "haiku",
+   "cost": 0.0556068,
+   "tokens": 115085,
+   "passed": true
+  }
+ ],
+ "tests": "21 passed in 0.07s",
+ "summary": "**Fixed.** Changed the Fahrenheit `from_base` conversion ratio from `5 / 9` to `9 / 5` on line 20 of `calcx/units.py`. The bug was using the inverse scaling ratio when converting from Kelvin to Fahrenheit\u2014it should multiply by 9/5 (not 5/9) to correctly scale the temperature offset. All 21 tests pass.",
+ "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0069 | tokens=8066 | size=S tier=cheap | heuristic_size=S -->\n# Brief\n\n## Start here\n- `calcx/units.py` \u2014 unit conversion logic lives here; C\u2192F formula is the likely culprit\n- `tests/test_calcx.py` \u2014 check existing unit conversion tests and add a C\u2192F regression test\n- `calcx/evaluator.py` \u2014 understand how the `to()` function invokes the conversion\n- `calcx/__init__.py` \u2014 see the public `calc()` API and what the user called\n\n## Conventions\n- Python with type hints; keep them throughout\n- Tests in `tests/` directory, use pytest\n- Unit conversion formulas are stateful (C\u2192F is scale + offset: `C * 9/5 + 32`, not just a ratio like C\u2192K)\n\n## Verify\n```\npytest -q\n```\nVerify the fix by checking a test that confirms `calc(\"to(100, C, F)\")` \u2248 212 (or check the actual call in `test_calcx.py` for how `to()` is invoked).\n\n## Risks\n- C\u2192K works, so don't break the offset-free conversions\n- Celsius to Fahrenheit has both multiplicative (9/5) *and* additive (+32) steps; the bug is likely a missing or wrong offset\n- Floating-point edge cases near 0\u00b0C (which is 32\u00b0F exactly)\n\n## Size\nS (single-file, local change) \u2014 this is a formula bug in the conversion lookup/application, almost certainly one or two lines in `units.py`.\n\n## Tier\ncheap \u2014 straightforward arithmetic fix in a small utility with no architectural implications.\n",
+ "handoff": "",
+ "final_tier": "haiku",
+ "wall": 52.53377985954285
+}
