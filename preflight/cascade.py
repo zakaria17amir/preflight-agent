@@ -1,4 +1,5 @@
 """Cheap tier first; on failure, hand off (distilled) and escalate."""
+
 from __future__ import annotations
 
 import re
@@ -45,10 +46,14 @@ class CascadeResult:
 
     def summary(self) -> str:
         from .llm import engine
+
         est = " (est. from list prices)" if engine() == "devin" else ""
         head = f"CASCADE {'PASS' if self.passed else 'FAIL'} total ${self.cost_usd:.4f}{est} {self.tokens} tok [{engine()}]"
-        rows = [f"  - {s.name:<10} {s.model:<28} ${s.cost_usd:.4f} {s.tokens:>7} tok {s.seconds:>5.0f}s"
-                + ("" if s.passed is None else ("  PASS" if s.passed else "  FAIL")) for s in self.stages]
+        rows = [
+            f"  - {s.name:<10} {s.model:<28} ${s.cost_usd:.4f} {s.tokens:>7} tok {s.seconds:>5.0f}s"
+            + ("" if s.passed is None else ("  PASS" if s.passed else "  FAIL"))
+            for s in self.stages
+        ]
         return "\n".join([head, *rows])
 
 
@@ -67,13 +72,21 @@ def _section(md: str, title: str, max_len: int = 220) -> str:
 def _attempt_summary(a: Attempt) -> str:
     files = sorted({m.group(1) for m in re.finditer(r"^\+\+\+ b/(.+)$", a.diff, re.M)})
     changed = f"changed {', '.join(files[:3])}{'…' if len(files) > 3 else ''}" if files else "made no changes"
-    first = next((l.strip() for l in a.agent_summary.splitlines() if l.strip()), "")
+    first = next((line.strip() for line in a.agent_summary.splitlines() if line.strip()), "")
     return f"{'PASS' if a.passed else 'FAIL'} — {a.tests.summary}. Agent {changed} in {a.turns} turns. {first}"[:400]
 
 
-def cascade(root: Path, issue: str, tiers: list[str], test_cmd: str | None = None, use_brief: bool = True,
-            use_handoff: bool = True, brief_model: str = "haiku", cheap_max_turns: int | None = None,
-            progress=None) -> CascadeResult:
+def cascade(
+    root: Path,
+    issue: str,
+    tiers: list[str],
+    test_cmd: str | None = None,
+    use_brief: bool = True,
+    use_handoff: bool = True,
+    brief_model: str = "haiku",
+    cheap_max_turns: int | None = None,
+    progress=None,
+) -> CascadeResult:
     """Run `tiers` in order. `cheap_max_turns` caps every tier except the last, so a failed cheap attempt stays cheap.
     `progress` (preflight.progress.Progress) gets one start/done per step for the dashboard side panel."""
     p = progress or NoProgress()
@@ -90,40 +103,60 @@ def cascade(root: Path, issue: str, tiers: list[str], test_cmd: str | None = Non
             p.start("brief", f"{brief_model} writes the delegation brief")
             brief_text, bres, s = make_brief(root, issue, model=brief_model)
             out.brief = brief_text
-            out.stages.append(Stage("brief", bres.cost_usd, bres.total_tokens, bres.duration_ms / 1000, model=bres.model))
+            out.stages.append(
+                Stage("brief", bres.cost_usd, bres.total_tokens, bres.duration_ms / 1000, model=bres.model)
+            )
             size, tier = parse_size_tier(brief_text)
             p.done(f"Size {size}, tier {tier}. Start here: {_section(brief_text, 'Start here')}", cost=bres.cost_usd)
 
         for i, tier in enumerate(tiers):
             is_last = i + 1 == len(tiers)
             budget = None if is_last else cheap_max_turns
-            p.start(f"attempt{i+1}", f"{tier}{f', budget {budget} tool calls' if budget else ''}, "
-                                     f"{'with brief v2' if i and use_handoff else 'with brief' if brief_text else 'cold'}")
+            p.start(
+                f"attempt{i + 1}",
+                f"{tier}{f', budget {budget} tool calls' if budget else ''}, "
+                f"{'with brief v2' if i and use_handoff else 'with brief' if brief_text else 'cold'}",
+            )
             a = attempt(root, issue, brief=brief_text, model=tier, test_cmd=test_cmd, max_turns=budget)
             out.attempts.append(a)
-            out.stages.append(Stage(f"attempt{i+1}", a.cost_usd, a.tokens, a.seconds, passed=a.passed, model=a.model))
+            out.stages.append(Stage(f"attempt{i + 1}", a.cost_usd, a.tokens, a.seconds, passed=a.passed, model=a.model))
             p.done(_attempt_summary(a), cost=a.cost_usd, ok=a.passed)
             if a.passed:
                 out.passed = True
-                say(f"solved at tier {i+1} ({tier}); total so far ${out.cost_usd:.4f}")
+                say(f"solved at tier {i + 1} ({tier}); total so far ${out.cost_usd:.4f}")
                 break
             if is_last:
-                say(f"tier {i+1} ({tier}) failed and it was the last tier")
+                say(f"tier {i + 1} ({tier}) failed and it was the last tier")
                 break
-            say(f"tier {i+1} ({tier}) failed -> escalating to {tiers[i+1]} "
-                f"{'with handoff' if use_handoff else 'with a clean restart (original brief)'}")
+            say(
+                f"tier {i + 1} ({tier}) failed -> escalating to {tiers[i + 1]} "
+                f"{'with handoff' if use_handoff else 'with a clean restart (original brief)'}"
+            )
             if use_handoff:
-                p.start("handoff", f"{brief_model} distills the failure for {tiers[i+1]}")
-                h_text, hres = make_handoff(issue, brief_text or "(no brief was given)", a.transcript_for_handoff(),
-                                            model=brief_model, scan_text=render(s, max_tree=60))
+                p.start("handoff", f"{brief_model} distills the failure for {tiers[i + 1]}")
+                h_text, hres = make_handoff(
+                    issue,
+                    brief_text or "(no brief was given)",
+                    a.transcript_for_handoff(),
+                    model=brief_model,
+                    scan_text=render(s, max_tree=60),
+                )
                 out.handoff = h_text
                 brief_text = h_text
-                out.stages.append(Stage("handoff", hres.cost_usd, hres.total_tokens, hres.duration_ms / 1000, model=hres.model))
-                p.done(f"Why it failed: {_section(h_text, 'What was tried and why it failed')} "
-                       f"Next: {_section(h_text, 'Remaining hypotheses')}", cost=hres.cost_usd)
+                out.stages.append(
+                    Stage("handoff", hres.cost_usd, hres.total_tokens, hres.duration_ms / 1000, model=hres.model)
+                )
+                p.done(
+                    f"Why it failed: {_section(h_text, 'What was tried and why it failed')} "
+                    f"Next: {_section(h_text, 'Remaining hypotheses')}",
+                    cost=hres.cost_usd,
+                )
 
-        p.finish(out.passed, f"{'Solved' if out.passed else 'Not solved'} at {out.final_tier or 'no tier'} "
-                             f"for ${out.cost_usd:.4f} across {len(out.attempts)} attempt(s).")
+        p.finish(
+            out.passed,
+            f"{'Solved' if out.passed else 'Not solved'} at {out.final_tier or 'no tier'} "
+            f"for ${out.cost_usd:.4f} across {len(out.attempts)} attempt(s).",
+        )
     except Exception as e:
         p.fail(repr(e))
         raise

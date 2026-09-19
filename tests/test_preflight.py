@@ -1,4 +1,5 @@
 """Tests for the zero-token parts of preflight, and a guard that every seeded bug really breaks the target."""
+
 import shutil
 import subprocess
 import sys
@@ -24,8 +25,13 @@ def test_keywords_drop_stopwords_and_split_identifiers():
 
 
 def test_scan_ranks_the_right_file_for_each_bug():
-    expected = {"report_counter": "calcx/report.py", "fahrenheit": "calcx/units.py", "power_assoc": "calcx/parser.py",
-                "leading_dot": "calcx/tokenizer.py", "unit_to_base": "calcx/units.py"}
+    expected = {
+        "report_counter": "calcx/report.py",
+        "fahrenheit": "calcx/units.py",
+        "power_assoc": "calcx/parser.py",
+        "leading_dot": "calcx/tokenizer.py",
+        "unit_to_base": "calcx/units.py",
+    }
     for bug, want in expected.items():
         s = scan(TARGET, BUGS[bug]["issue"])
         top3 = [h.path for h in s.hits[:3]]
@@ -45,8 +51,11 @@ def test_heuristic_size_is_a_letter():
 
 def test_handoff_sanitize_strips_fake_tool_calls():
     from preflight.handoff import sanitize
-    raw = ("I'll analyze the codebase first.\n<function_calls>\n<invoke name=\"read\">\n<parameter name=\"path\">x.py"
-           "</parameter>\n</invoke>\n</function_calls>\n## Start here\n1. calcx/parser.py\n")
+
+    raw = (
+        'I\'ll analyze the codebase first.\n<function_calls>\n<invoke name="read">\n<parameter name="path">x.py'
+        "</parameter>\n</invoke>\n</function_calls>\n## Start here\n1. calcx/parser.py\n"
+    )
     clean, had = sanitize(raw)
     assert had and clean.startswith("## Start here") and "<invoke" not in clean
     assert sanitize("## Start here\n- ok\n") == ("## Start here\n- ok", False)
@@ -54,6 +63,7 @@ def test_handoff_sanitize_strips_fake_tool_calls():
 
 def test_pricing_parse_and_lookup():
     from preflight import pricing
+
     sample = """Available models (2 families)
 
 Claude Haiku 4.5 (claude-haiku-4.5)
@@ -78,6 +88,7 @@ SWE-2 (swe-2)
 
 def test_engine_selection(monkeypatch):
     from preflight import llm
+
     monkeypatch.delenv("PREFLIGHT_ENGINE", raising=False)
     assert llm.engine() == "claude"
     monkeypatch.setenv("PREFLIGHT_ENGINE", "devin")

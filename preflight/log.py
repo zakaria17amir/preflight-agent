@@ -1,4 +1,5 @@
 """Progress output to stderr so long-running stages are visible. Set PREFLIGHT_QUIET=1 to silence."""
+
 from __future__ import annotations
 
 import os
@@ -23,4 +24,4 @@ def block(title: str, body: str, max_lines: int = 60) -> None:
     more = f"\n  ... ({len(lines) - max_lines} more lines)" if len(lines) > max_lines else ""
     bar = "─" * max(8, min(72, len(title) + 4))
     print(f"\n  ┌{bar}\n  │ {title}\n  └{bar}", file=sys.stderr)
-    print("\n".join("  " + l for l in lines[:max_lines]) + more + "\n", file=sys.stderr, flush=True)
+    print("\n".join("  " + line for line in lines[:max_lines]) + more + "\n", file=sys.stderr, flush=True)

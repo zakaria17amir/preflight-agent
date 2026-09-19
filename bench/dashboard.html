@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="preflight: brief the coding agent, size the job, start cheap. Measured results of a cheap-first model cascade.">
+<meta name="color-scheme" content="dark">
 <title>preflight · results dashboard</title>
 <style>
   :root { --bg:#0f1115; --panel:#171a21; --line:#262b36; --fg:#e6e8ee; --dim:#8b93a7;
@@ -80,10 +83,23 @@
   @keyframes spin { to { transform:rotate(360deg); } }
   @keyframes pulse { 50% { opacity:.4; } }
   #side .live-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--handoff); margin-right:6px; animation:pulse 1.2s ease-in-out infinite; }
+  /* interactive cells are real buttons */
+  button.cell { font:inherit; border:0; background:none; color:inherit; text-align:left; }
+  button.cell:focus-visible, a:focus-visible, button:focus-visible { outline:2px solid var(--sonnet); outline-offset:2px; }
+  .replay { font:inherit; font-size:11px; color:var(--dim); background:none; border:1px solid var(--line); border-radius:6px; padding:2px 8px; cursor:pointer; }
+  .replay:hover { color:var(--fg); border-color:var(--dim); }
+  .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+  .scroll { overflow-x:auto; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
+  @media (max-width: 1100px) { .kpis { grid-template-columns:repeat(3,1fr); } .c6 { grid-column:span 12; } body.has-side main { padding-right:28px; }
+    #side { position:fixed; inset:auto 0 0 0; height:auto; max-height:60vh; width:auto; border-left:0; border-top:1px solid var(--line); box-shadow:0 -8px 30px rgba(0,0,0,.5); } }
+  @media (max-width: 640px) { header { flex-wrap:wrap; gap:8px 12px; padding:14px 16px 8px; } header .live { margin-left:0; width:100%; } header .sub { display:none; }
+    main { padding:12px 16px 32px; gap:12px; } .kpis { grid-template-columns:repeat(2,1fr); } .kpi .v { font-size:20px; } .cols { grid-template-columns:1fr; }
+    .banner { margin:12px 16px 0; } th, td { padding:5px 6px; } }
 </style>
 </head>
 <body>
-<header>
+<header role="banner">
   <h1>preflight</h1>
   <span class="sub">brief the agent · size the job · start cheap — results dashboard</span>
   <a class="repo" href="https://github.com/zakaria17amir/preflight-agent" target="_blank" rel="noopener">github ↗</a>
@@ -91,8 +107,8 @@
   <span class="live">● <b id="status">connecting</b> <span id="updated"></span></span>
 </header>
 <div class="banner" id="banner" style="display:none"></div>
-<aside id="side"></aside>
-<main>
+<aside id="side" aria-live="polite" aria-label="Run tracker"></aside>
+<main id="main">
   <section class="kpis" id="kpis"></section>
 
   <section class="panel c6">
@@ -118,24 +134,24 @@
 
   <section class="panel c6">
     <h2>Model analytics <span class="muted">(attempts only, overhead calls listed separately)</span></h2>
-    <table id="models"></table>
+    <div class="scroll"><table id="models"></table></div>
   </section>
 
   <section class="panel c6">
     <h2>Arm analytics</h2>
-    <table id="arms"></table>
+    <div class="scroll"><table id="arms"></table></div>
   </section>
 
   <section class="panel c12">
     <h2>Run matrix <span class="muted">— click a cell for the brief, handoff, diff and agent summary</span></h2>
-    <table id="matrix"></table>
+    <div class="scroll"><table id="matrix"></table></div>
   </section>
 
   <section class="panel" id="detail"></section>
 
   <section class="panel c12">
     <h2 id="liveTitle">Live cascade runs <span class="muted">(from <code>python -m preflight cascade</code>, newest first)</span></h2>
-    <table id="liveRuns"></table>
+    <div class="scroll"><table id="liveRuns"></table></div>
   </section>
 
   <section class="panel c12" id="transcript">
@@ -180,7 +196,7 @@ async function load() {
       fetch('results/progress.json?t=' + Date.now()).then(x => x.ok ? x.json() : null).catch(() => null),
     ]);
     RESULTS = r; LIVE = Array.isArray(l) ? l : [];
-    renderSide(pg);
+    if (!REPLAY) renderSide(pg);
     if (STATIC) {
       BUILD = BUILD || await fetch('results/meta.json').then(x => x.ok ? x.json() : null).catch(() => null);
       const latest = LIVE.length ? LIVE[LIVE.length-1].when : '';
@@ -302,7 +318,7 @@ function renderMatrix() {
     bugs().map(bug => `<tr><td>${esc(bug)}</td><td>${BUG_SIZE[bug]||'?'}</td>` + A.map(arm => {
       const r = RESULTS[bug]?.[arm]; if (!r) return '<td class="muted">—</td>';
       const tier = r.final_tier ? tierOf(r.final_tier) : tierOf((r.stages||[]).filter(s=>s.name.startsWith('attempt')).at(-1)?.model);
-      return `<td><span class="cell ${r.passed?'pass':'fail'}" onclick="showDetail('${bug}','${arm.replace(/'/g,"\'")}')">${r.passed?'PASS':'FAIL'} ${fmt$(r.cost)}${r.cost_estimated?'<span class="est">est</span>':''} <span class="tier">${tier}</span></span></td>`; }).join('') + '</tr>').join('');
+      return `<td><button type="button" class="cell ${r.passed?'pass':'fail'}" data-bug="${esc(bug)}" data-arm="${esc(arm)}" aria-label="${esc(bug)} ${esc(arm)}: ${r.passed?'passed':'failed'}, ${fmt$(r.cost)}" onclick="showDetail(this.dataset.bug, this.dataset.arm)">${r.passed?'PASS':'FAIL'} ${fmt$(r.cost)}${r.cost_estimated?'<span class="est">est</span>':''} <span class="tier">${tier}</span></button></td>`; }).join('') + '</tr>').join('');
 }
 
 function stageBar(stages) {
@@ -313,7 +329,7 @@ function stageBar(stages) {
 function showDetail(bug, arm, scroll=true) {
   const r = RESULTS[bug]?.[arm]; if (!r) return; selected = {bug, arm};
   const d = $('#detail'); d.classList.add('open');
-  d.innerHTML = `<span class="close" onclick="document.getElementById('detail').classList.remove('open');selected=null">✕ close</span>
+  d.innerHTML = `<button type="button" class="close replay" onclick="document.getElementById('detail').classList.remove('open');selected=null">✕ close</button>
     <h2>${esc(bug)} · ${armLabel(arm)} <span class="muted">${META(arm)[1]}</span> — <span class="${r.passed?'pass':'fail'} cell">${r.passed?'PASS':'FAIL'}</span> ${fmt$(r.cost)}${r.cost_estimated?'<span class="est">est</span>':''} · ${(r.tokens/1000).toFixed(0)}k tok · ${r.turns} turns · ${Math.round(r.wall||r.seconds||0)}s · engine <span class="tag ${engineOf(r)==='devin'?'devin':''}">${engineOf(r)}</span></h2>
     <div class="stages">${stageBar(r.stages||[])}
       <table><tr><th>stage</th><th>model</th><th class="num">$</th><th class="num">tokens</th><th>result</th></tr>
@@ -330,16 +346,47 @@ function showDetail(bug, arm, scroll=true) {
 }
 
 function renderLive() {
-  if (!LIVE.length) { $('#liveRuns').innerHTML = '<tr><td class="muted">No live runs yet. Run <code>python -m preflight cascade …</code> and they appear here.</td></tr>'; return; }
-  $('#liveRuns').innerHTML = `<tr><th>when</th><th>engine</th><th>repo</th><th>issue</th><th>tiers</th><th>cap</th><th>result</th><th class="num">$</th><th>stages</th></tr>` +
-    [...LIVE].reverse().slice(0, 25).map(r => `<tr><td>${esc(r.when)}</td><td><span class="tag ${engineOf(r)==='devin'?'devin':''}">${engineOf(r)}</span></td><td>${esc(r.repo)}</td><td title="${esc(r.issue)}">${esc((r.issue||'').slice(0,60))}${(r.issue||'').length>60?'…':''}</td><td>${esc((r.tiers||[]).join(' → '))}</td><td>${r.cheap_max_turns??'—'}</td><td><span class="cell ${r.passed?'pass':'fail'}">${r.passed?'PASS':'FAIL'} <span class="tier">${tierOf(r.final_tier)}</span></span></td><td class="num">${fmt$(r.cost)}${engineOf(r)==='devin'?'<span class="est">est</span>':''}</td><td style="min-width:160px">${stageBar(r.stages||[])}</td></tr>`).join('');
+  if (!LIVE.length) { $('#liveRuns').innerHTML = '<tr><td class="muted">No recorded runs yet. Run <code>python -m preflight cascade …</code> and they appear here with a ▶ replay button.</td></tr>'; return; }
+  $('#liveRuns').innerHTML = `<tr><th>when</th><th>engine</th><th>repo</th><th>issue</th><th>tiers</th><th>cap</th><th>result</th><th class="num">$</th><th>stages</th><th></th></tr>` +
+    [...LIVE].reverse().slice(0, 25).map((r, i) => `<tr><td>${esc(r.when)}</td><td><span class="tag ${engineOf(r)==='devin'?'devin':''}">${engineOf(r)}</span></td><td>${esc(r.repo)}</td><td title="${esc(r.issue)}">${esc((r.issue||'').slice(0,60))}${(r.issue||'').length>60?'…':''}</td><td>${esc((r.tiers||[]).join(' → '))}</td><td>${r.cheap_max_turns??'—'}</td><td><span class="cell ${r.passed?'pass':'fail'}">${r.passed?'PASS':'FAIL'} <span class="tier">${tierOf(r.final_tier)}</span></span></td><td class="num">${fmt$(r.cost)}${engineOf(r)==='devin'?'<span class="est">est</span>':''}</td><td style="min-width:160px">${stageBar(r.stages||[])}</td><td><button type="button" class="replay" onclick="replayRun(${LIVE.length-1-i})" aria-label="replay this run step by step">▶ replay</button></td></tr>`).join('');
 }
 
 const STEP_LABEL = { scan:'Scan', brief:'Brief', attempt1:'Attempt 1', handoff:'Handoff', attempt2:'Attempt 2', attempt3:'Attempt 3' };
+let REPLAY = null;
+const section = (md, title) => { const m = (md||'').match(new RegExp('^##\\s*' + title + '\\s*$\\n([\\s\\S]*?)(?=^## |$(?![\\s\\S]))', 'm')); if (!m) return '';
+  const line = m[1].split('\n').map(s => s.replace(/^[-*\d.\s]+/, '').trim()).find(Boolean) || ''; return line.length > 200 ? line.slice(0, 199) + '…' : line; };
+function stepsFromRun(r) {
+  // rebuild a progress-style step list from a recorded run so it can be replayed on the static site
+  const steps = [{ name:'scan', detail:'deterministic repo scan, 0 tokens', summary:`Repo ${r.repo}. Issue: ${(r.issue||'').slice(0, 90)}…`, seconds:0, cost:0, status:'done' }];
+  for (const s of (r.stages||[])) {
+    if (s.name === 'brief') steps.push({ name:'brief', detail:`${s.model} writes the delegation brief`, summary:`${section(r.brief,'Size')} · Start here: ${section(r.brief,'Start here')}`, cost:s.cost, status:'done' });
+    else if (s.name === 'handoff') steps.push({ name:'handoff', detail:`${s.model} distills the failure`, summary:`Why it failed: ${section(r.handoff,'What was tried and why it failed')} Next: ${section(r.handoff,'Remaining hypotheses')}`, cost:s.cost, status:'done' });
+    else steps.push({ name:s.name, detail:`${s.model}${r.cheap_max_turns && s.name==='attempt1' ? `, budget ${r.cheap_max_turns} tool calls` : ''}`, summary:`${s.passed?'PASS':'FAIL'} — ${(s.tokens/1000).toFixed(0)}k tokens${s.name===r.stages.at(-1).name && r.summary ? '. ' + r.summary.split('\n').find(Boolean) : ''}`, cost:s.cost, status:s.passed?'pass':'fail' });
+  }
+  return steps;
+}
+function replayRun(idx) {
+  const r = LIVE[idx]; if (!r) return;
+  const steps = stepsFromRun(r);
+  const pg = { title:`${r.repo} (replay)`, repo:r.repo, issue:r.issue, engine:engineOf(r), tiers:r.tiers||[], status:'running', started:Date.now()/1000, steps:[], total_cost:0, passed:r.passed, final_summary:`${r.passed?'Solved':'Not solved'} at ${tierOf(r.final_tier)} for ${fmt$(r.cost)} across ${(r.stages||[]).filter(s=>s.name.startsWith('attempt')).length} attempt(s).` };
+  if (REPLAY) clearTimeout(REPLAY.timer);
+  REPLAY = { timer:null };
+  sideHidden = false;
+  document.getElementById('side').scrollIntoView({ behavior:'smooth', block:'nearest' });
+  let i = 0;
+  const tick = () => {
+    if (i < steps.length) {
+      pg.steps.push({ ...steps[i], status:'running', summary:'' });
+      renderSide(pg);
+      REPLAY.timer = setTimeout(() => { Object.assign(pg.steps[i], steps[i]); pg.total_cost += steps[i].cost||0; i++; renderSide(pg); REPLAY.timer = setTimeout(tick, 500); }, 1100);
+    } else { pg.status = 'finished'; pg.finished = Date.now()/1000; renderSide(pg); REPLAY.timer = setTimeout(() => { REPLAY = null; }, 15000); }
+  };
+  tick();
+}
 let sideHidden = false;
 function renderSide(pg) {
   const side = $('#side'), toggle = $('#sideToggle');
-  const fresh = pg && (pg.status === 'running' || (Date.now()/1000 - (pg.finished || pg.updated || 0)) < 3600);
+  const fresh = pg && (pg.status === 'running' || REPLAY || (Date.now()/1000 - (pg.finished || pg.updated || 0)) < 3600);
   if (!pg || !fresh) { side.classList.remove('open'); document.body.classList.remove('has-side'); toggle.style.display = 'none'; return; }
   toggle.style.display = ''; toggle.textContent = sideHidden ? 'show run tracker' : 'hide run tracker';
   toggle.onclick = e => { e.preventDefault(); sideHidden = !sideHidden; renderSide(pg); };
@@ -357,7 +404,7 @@ function renderSide(pg) {
     <div class="issue">${esc(pg.issue)}</div>
     ${rows.join('')}
     ${pg.status !== 'running' ? `<div class="final ${pg.passed?'pass':'fail'}">${pg.passed ? '✓' : '✗'} ${esc(pg.final_summary||'')}</div>` : ''}
-    <div class="foot">${running ? 'updates every 4s from bench/results/progress.json' : `finished ${new Date(pg.finished*1000).toLocaleTimeString()}`}</div>`;
+    <div class="foot">${REPLAY ? 'replaying a recorded run' : running ? 'updates every 4s from bench/results/progress.json' : `finished ${new Date(pg.finished*1000).toLocaleTimeString()}`}</div>`;
 }
 function stepRow(s) {
   const model = s.detail ? `<small>${esc(s.detail)}</small>` : '';

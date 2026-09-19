@@ -1,4 +1,5 @@
 """Resolve GitHub URLs to a local clone + issue text, via the `gh` CLI (which owns auth)."""
+
 from __future__ import annotations
 
 import re
@@ -19,18 +20,33 @@ def parse(url: str) -> tuple[str, str, int | None] | None:
 def clone(owner: str, repo: str) -> Path:
     dst = Path(tempfile.mkdtemp(prefix=f"preflight_gh_{repo}_")) / repo
     say(f"cloning github.com/{owner}/{repo} (shallow) -> {dst}")
-    subprocess.run(["git", "clone", "-q", "--depth", "1", f"https://github.com/{owner}/{repo}.git", str(dst)],
-                   check=True, capture_output=True, text=True)
+    p = subprocess.run(
+        ["git", "clone", "-q", "--depth", "1", f"https://github.com/{owner}/{repo}.git", str(dst)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    if p.returncode != 0:
+        raise RuntimeError(
+            f"clone of github.com/{owner}/{repo} failed: {p.stderr.strip().splitlines()[-1] if p.stderr.strip() else 'unknown error'}"
+        )
     return dst
 
 
 def issue_text(owner: str, repo: str, number: int) -> str:
     say(f"fetching issue #{number} from github.com/{owner}/{repo}")
-    p = subprocess.run(["gh", "issue", "view", str(number), "-R", f"{owner}/{repo}", "--json", "title,body"],
-                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+    p = subprocess.run(
+        ["gh", "issue", "view", str(number), "-R", f"{owner}/{repo}", "--json", "title,body"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
     if p.returncode != 0:
         raise RuntimeError(f"gh issue view failed: {p.stderr.strip()[-300:]}")
     import json
+
     d = json.loads(p.stdout)
     return f"{d['title']}\n\n{d.get('body') or ''}".strip()
 
