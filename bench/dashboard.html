@@ -203,8 +203,10 @@ async function load() {
       $('#status').textContent = 'snapshot'; $('#status').style.color = 'var(--handoff)';
       $('#updated').textContent = (BUILD ? `built ${BUILD.built} @ ${BUILD.commit}` : '') + (latest ? ` · last recorded run ${latest}` : '');
       $('#banner').style.display = 'block';
-      $('#banner').innerHTML = 'This is a <b>static snapshot</b> of the results committed to the repo. Agent runs need a machine with the <code>claude</code> / <code>devin</code> CLI logged in, so nothing runs here. To run it live: <code>git clone</code> the repo, then <code>python bench/dashboard.py</code> and <code>python -m preflight demo</code>.';
-      $('#liveTitle').innerHTML = 'Recorded cascade runs <span class="muted">(from <code>python -m preflight cascade</code>, newest first)</span>';
+      $('#banner').innerHTML = '<b>Want to see how the agent worked?</b> Scroll to <b>Recorded cascade runs</b> and press <a href="#liveTitle" class="replay" style="color:var(--handoff);border-color:var(--handoff)">&#9654; replay</a> on any run: the tracker steps through scan &rarr; brief &rarr; cheap attempt &rarr; handoff &rarr; strong attempt with a one-line conclusion per step. This page is a static snapshot of committed results; agent runs need a machine with the <code>claude</code> / <code>devin</code> CLI logged in (<code>git clone</code> the repo, then <code>python bench/dashboard.py</code>).';
+      $('#liveTitle').innerHTML = 'Recorded cascade runs <span class="muted">(from <code>python -m preflight cascade</code>, newest first) &mdash; press &#9654; replay to watch one</span>';
+      $('#banner').querySelector('a').onclick = e => { e.preventDefault(); const btn = document.querySelector('#liveRuns button.replay'); if (!btn) return;
+        btn.scrollIntoView({ behavior:'smooth', block:'center' }); btn.style.outline = '2px solid var(--handoff)'; setTimeout(() => btn.style.outline = '', 2500); };
     } else {
       $('#status').textContent = 'live'; $('#updated').textContent = 'updated ' + new Date().toLocaleTimeString();
     }
