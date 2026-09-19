@@ -3,12 +3,12 @@
 **Brief the agent, size the job, start cheap.**
 
 [![CI](https://github.com/zakaria17amir/preflight-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/zakaria17amir/preflight-agent/actions/workflows/ci.yml)
-[![Dashboard](https://img.shields.io/badge/dashboard-live-3ecf8e)](https://zakaria17amir.github.io/preflight-agent/)
+[![Dashboard](https://img.shields.io/badge/dashboard-live-3ecf8e)](https://preflight-agent.vercel.app)
 [![Demo issue](https://img.shields.io/badge/demo%20target-calcx--demo%231-4f8cff)](https://github.com/zakaria17amir/calcx-demo/issues/1)
 
-**Live dashboard:** https://zakaria17amir.github.io/preflight-agent/ — every result below, per-model analytics,
-and **▶ replay** on any recorded run to step through it. (Static snapshot of committed results; agent runs happen
-on your machine, see *Quick start*.)
+**Live dashboard:** https://preflight-agent.vercel.app (mirror: https://zakaria17amir.github.io/preflight-agent/) —
+every result below, per-model analytics, and **▶ replay** on any recorded run to step through it. (Static snapshot
+of committed results; agent runs happen on your machine, see *Quick start*.)
 
 ## Quick start on a fresh laptop (≈5 minutes)
 
@@ -278,8 +278,8 @@ more than *that*:
   model families; the cross-vendor result (GPT-5.6 Luna fixing bugs from a Claude-written brief) came from that.
 - **CI as a gate.** `.github/workflows/ci.yml` runs ruff + pytest on Linux and Windows, Python 3.11 and 3.13;
   `pages.yml` redeploys the dashboard on every results push.
-- **Sessions & PRs:** see the *Devin evidence* links on the submission (session transcript, PR
-  [#1](https://github.com/zakaria17amir/preflight-agent/pulls) with the rubric-hardening changes).
+- **Sessions & PRs:** [PR #1](https://github.com/zakaria17amir/preflight-agent/pull/1) (rubric hardening, CI
+  green on 4 OS/Python combos before merge); the Devin session transcript is linked from the submission.
 
 ## Related work and what this adds
 
