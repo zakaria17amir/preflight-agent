@@ -1,0 +1,29 @@
+{
+ "passed": true,
+ "cost": 0.0646858,
+ "tokens": 197218,
+ "turns": 9,
+ "seconds": 38.02967554283142,
+ "stages": [
+  {
+   "name": "brief",
+   "model": "claude-haiku-4-5-20251001",
+   "cost": 0.009906499999999999,
+   "tokens": 8386,
+   "passed": null
+  },
+  {
+   "name": "attempt1",
+   "model": "haiku",
+   "cost": 0.0547793,
+   "tokens": 188832,
+   "passed": true
+  }
+ ],
+ "tests": "21 passed in 0.11s",
+ "summary": "Perfect! All tests pass. Here's the summary:\n\n**Files changed:** `calcx/report.py:33`\n\n**Root cause:** The error check was looking for `\"Error:\"` (uppercase) but errors are formatted as `\"error:\"` (lowercase) in `evaluate_batch()`, so error rows were being counted as \"ok\".\n\n**Test status:** All 21 tests pass \u2713",
+ "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0099 | tokens=8386 | size=S tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n1. **calcx/report.py** \u2014 contains `format_report()` where the summary line is built; likely counting all rows as \"ok\" without distinguishing errors\n2. **tests/test_calcx.py** \u2014 verify test coverage for the summary line behavior; look for any test that checks mixed ok/error results\n3. **calcx/evaluator.py** \u2014 understand how errors are structured in the result tuples returned to `format_report()`\n\n## Conventions\n- Python with type hints; preserve them in the fix\n- Tests in `tests/` directory using pytest\n- Result rows are `tuple[str, str]` (expression, result/error string)\n\n## Verify\nRun `pytest -q` to baseline. The fix should be verified by a test that evaluates a batch with at least one error and confirms the summary counts only successful results as \"ok\" (e.g., \"2/3 ok\" not \"3/3 ok\").\n\n## Risks\n- Don't assume all rows with no error text are \"ok\" \u2014 verify how errors are marked in the tuple (likely error text in second element)\n- The count logic must handle both the summary line and any internal batch evaluation tracking\n- Ensure no off-by-one errors when counting successes vs. total rows\n\n## Size\n**S** \u2014 bug is isolated to counting logic in `format_report()`, a single-file local fix.\n\n## Tier\n**cheap** \u2014 straightforward counting bug in a report formatter; no cross-module impact or design work needed.\n",
+ "handoff": "",
+ "final_tier": "haiku",
+ "wall": 42.55580711364746
+}

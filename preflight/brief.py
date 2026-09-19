@@ -1,9 +1,11 @@
 """Generate BRIEF.md: what a tech lead would tell the agent before delegating."""
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from . import llm
+from .log import block, say
 from .scan import Scan, render, scan
 
 BRIEF_SYSTEM = (
@@ -61,10 +63,9 @@ def parse_size_tier(text: str) -> tuple[str, str]:
         if not ls:
             continue
         if sec == "size" and size == "?":
-            for c in ("S", "M", "L"):
-                if ls.upper().startswith(c) or ls.upper().startswith(f"**{c}"):
-                    size = c
-                    break
+            m = re.match(r"[*_`\s]*([SML])\b", ls)
+            if m:
+                size = m.group(1)
         elif sec == "tier" and tier == "?":
             for t in ("cheap", "mid", "strong"):
                 if t in ls.lower():
@@ -75,8 +76,14 @@ def parse_size_tier(text: str) -> tuple[str, str]:
 
 def make_brief(root: Path, issue: str, model: str = "haiku") -> tuple[str, llm.LLMResult, Scan]:
     s = scan(root, issue)
+    top = ", ".join(h.path for h in s.hits[:3]) or "(no keyword hits)"
+    say(f"scan: {s.n_files} files, 0 tokens; test cmd `{s.test_cmd}`; top files by issue keywords: {top}")
+    say(f"brief: asking {model} ...")
     res = llm.call(BRIEF_PROMPT.format(scan=render(s), issue=issue.strip()), model=model, system=BRIEF_SYSTEM)
     size, tier = parse_size_tier(res.text)
     header = (f"<!-- preflight brief | model={res.model} | cost=${res.cost_usd:.4f} | "
               f"tokens={res.total_tokens} | size={size} tier={tier} | heuristic_size={heuristic_size(s)} -->\n")
-    return header + "# Brief\n\n" + res.text.strip() + "\n", res, s
+    text = header + "# Brief\n\n" + res.text.strip() + "\n"
+    say(f"brief: size={size} tier={tier} (heuristic {heuristic_size(s)}), ${res.cost_usd:.4f}, {res.duration_ms/1000:.0f}s")
+    block("BRIEF", res.text)
+    return text, res, s

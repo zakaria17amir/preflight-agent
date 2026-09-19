@@ -2,27 +2,80 @@
 
 **Brief the agent, size the job, start cheap.**
 
-Most of what you pay a coding agent goes to two things that produce no code: *orientation* (figuring out where
-things live in a repo it has never seen) and *overkill* (running a frontier model on a one-line fix).
-`preflight` sits in front of the agent and does what a tech lead does before delegating:
+A tech-lead pass that runs *before* a coding agent does: it orients the agent, sizes the task, tries the cheap
+model first, and escalates with a distilled post-mortem when that fails. Built in a 3-hour hackathon, with a
+measured experiment instead of a promise.
 
-1. **`brief`** — scans the repo deterministically (zero tokens), then has a cheap model write a short delegation
-   brief: where to start, conventions, how to verify, risks, a **size call (S/M/L)** and a **tier recommendation**.
-2. **`run`** — one agent attempt at a chosen tier, in a scratch copy, verified by the repo's own tests.
-3. **`handoff`** — when an attempt fails, distill *what was tried, why it failed, what's ruled out* into an
-   enriched brief. Not the raw transcript: a failed transcript left in context anchors the next attempt on the
-   same wrong path ([context contamination](https://arxiv.org/abs/2605.08563)). A structured post-mortem is a
-   different treatment, and whether it beats a cold restart is the question this repo measures.
-4. **`cascade`** — cheap tier first; on failure, handoff and escalate.
+```
+issue ──▶ scan (0 tokens) ──▶ brief (haiku, ~$0.01) ──▶ attempt: haiku ──▶ tests pass? ──▶ done
+                                                              │ fail
+                                                              ▼
+                                                    handoff (post-mortem) ──▶ attempt: sonnet ──▶ tests
+```
 
-Engine: the `claude` CLI in `-p` (print) mode as a subprocess. No API keys, no SDK; `--output-format json`
-gives real per-call `cost_usd` and token counts, which is where the numbers below come from.
+## TL;DR of the results
 
-## The number
+| | pass | cost for 5 bugs | vs sonnet alone |
+|---|---|---|---|
+| Sonnet, cold | 5/5 | $0.62 | — |
+| **Haiku + brief** | 5/5 | **$0.42** | **−32%** |
+| Cascade, forced to escalate on 3/5 | 5/5 | $0.72 | **+16%** |
 
-Five bugs seeded into a small Python package (`bench/target`, a tokenizer → parser → evaluator calculator with
-units and a report). Issues are written like a human would write them: symptoms only, **no file names**. Six arms
-per bug, each verified by the repo's 21 tests:
+- A **$0.01 brief** let the cheap model match the expensive one at a third less cost.
+- **Starting cheap can lose**, and did when the cheap tier was budget-capped: failed cheap attempts were empty,
+  so the cascade paid twice and the handoff had nothing to carry.
+- The lesson is upstream of "handoff vs clean restart": **the escalation gate matters more than the handoff.**
+  Escalate on *wrong patch*, not *no patch*.
+
+n = 5 bugs × 1 run per cell, toy repo. Directional, not a result. Details and caveats below.
+
+## Why
+
+You pay a coding agent the same whether the task is a typo or a refactor, and you hand it the same thin issue
+either way. Two wastes follow: the agent spends its first stretch **orienting** (reading files, guessing
+conventions, sometimes editing the wrong module), and every task gets the **frontier model** regardless of size.
+`preflight` attacks both: brief first, size the job, spend accordingly.
+
+## Live demo (about 2 minutes)
+
+```bash
+python -m preflight demo power_assoc        # seeds a bug into a scratch copy of calcx, writes ISSUE.md
+python -m preflight scan  <scratch> ISSUE.md      # zero tokens: right file ranked first
+python -m preflight cascade <scratch> ISSUE.md --tiers haiku,sonnet --cheap-max-turns 2
+```
+
+Progress streams to stderr as it happens: scan → brief (printed) → haiku attempt with a 2-tool-call budget →
+tests → diff → **escalation** → handoff (printed) → sonnet attempt → tests → diff → per-stage cost table.
+Use `--cheap-max-turns 3` or higher and haiku usually solves it alone; drop the flag for the real policy.
+Nothing touches your tree: every attempt runs in a fresh `git init`-ed copy under `%TEMP%`, and the path is printed.
+
+Real repo: [`examples/click_progressbar_BRIEF.md`](examples/click_progressbar_BRIEF.md) is the brief for a
+symptom-only issue against a fresh clone of pallets/click (~100 files). **$0.018, 14 s.** It puts
+`src/click/_termui_impl.py` first (where `ProgressBar` lives), names the `-k progressbar` test selector, calls
+it M / mid, and warns not to change `update(n)`.
+
+## Commands
+
+| command | what it does | tokens |
+|---|---|---|
+| `scan <repo> <issue>` | file tree, README, test command, conventions, files ranked by issue keywords | 0 |
+| `brief <repo> <issue>` | scan → haiku → `BRIEF.md`: start-here files, conventions, verify, risks, **size S/M/L, tier** | ~9k |
+| `run <repo> <issue> [--brief B] [--model M] [--max-turns N]` | one agent attempt in a scratch copy; the repo's tests decide | agent |
+| `handoff <issue> <brief> <log> [--repo R]` | failed attempt → structured post-mortem brief (v2), grounded on the scan | ~9k |
+| `cascade <repo> <issue> [--tiers a,b] [--cheap-max-turns N] [--no-handoff]` | tiers in order, handoff between them, per-stage costs | agent |
+| `demo [bug]` | seed a bench bug into a scratch copy for a live demo | 0 |
+
+Engine: the `claude` CLI in `-p` mode as a subprocess. No API keys, no SDK. `--output-format json` returns real
+`cost_usd` and token counts per call; that is where every number here comes from. `--strict-mcp-config` drops the
+CLI's fixed overhead from ~88k to ~7k tokens per call (a 10× cost difference we found by measuring).
+
+Requires Python 3.11+ and a logged-in `claude` CLI. No other dependencies.
+
+## The experiment
+
+`bench/target` is **calcx**: tokenizer → recursive-descent parser → evaluator, with unit conversion and a text
+report. ~300 lines, 7 files, 21 tests. `bench/bugs.py` seeds five bugs (S, S, M, M, L) and pairs each with an
+issue written the way a human writes one: **symptoms only, no file names.**
 
 | arm | what it is | tests the claim |
 |---|---|---|
@@ -30,7 +83,7 @@ per bug, each verified by the repo's 21 tests:
 | **B** `brief_cheap` | haiku, issue + brief | does orientation let a cheap model do the job? |
 | **C** `cascade` | brief → haiku → handoff → sonnet | start cheap, escalate *informed* |
 | **D** `cascade_nohandoff` | brief → haiku → sonnet (clean restart) | control for C |
-| **E** `capped_handoff` | like C, but haiku gets only 4 tool calls | forces escalation; is a cheap failure informative? |
+| **E** `capped_handoff` | like C, haiku limited to 4 tool calls | forces escalation; is a cheap failure informative? |
 | **F** `capped_nohandoff` | like E, clean restart | control for E: isolates the handoff |
 
 <!-- RESULTS_TABLE -->
@@ -44,112 +97,100 @@ per bug, each verified by the repo's 21 tests:
 | **total** | | **5/5 pass, $0.623** | **5/5 pass, $0.421** | **5/5 pass, $0.380** | **5/5 pass, $0.415** | **5/5 pass, $0.721** | **5/5 pass, $0.431** |
 <!-- /RESULTS_TABLE -->
 
-Costs are total dollars per bug **including** the brief and handoff calls (the overhead is part of the price).
-Full per-run records with briefs, handoffs, diffs and test output: `bench/results/runs/`.
+Costs include the brief and handoff calls. `(haiku)`/`(sonnet)` is the tier that produced the passing patch.
+Every run's brief, handoff, diff, test output and agent summary is in `bench/results/runs/<bug>.<arm>.json`.
 
-### What the table says (n=5, one run per cell, so read as directional)
+### What it says
 
-1. **Orientation works.** Haiku with a brief (B) solved 5/5 for **$0.42 vs $0.62** for cold sonnet (A): same pass
-   rate, 32% cheaper, including the ~$0.01 the brief costs. The brief put the right file first every time
-   (`tests/test_preflight.py::test_scan_ranks_the_right_file_for_each_bug` checks the zero-token ranking alone
-   does this).
-2. **The cascade never escalated.** In C and D, briefed haiku solved every bug, including the L one. So on this repo
-   C ≈ B ≈ D and the difference between them is run-to-run noise (~10%). Good for the "start cheap" thesis, useless
-   for testing the handoff.
-3. **Starting cheap can lose. It did here.** Forcing escalation with a 4-tool-call cap (E) cost **$0.72, 16% more
-   than just using sonnet.** Three of five haiku attempts hit the cap with an empty diff, so the cheap attempt bought
-   nothing and the cascade paid twice. F came in at $0.43 only because haiku happened to finish inside the cap
-   on 4/5 bugs. The E–F gap is variance in *whether haiku finished*, not the handoff.
-4. **Handoff vs clean restart: one paired data point.** On `unit_to_base` both E and F escalated and both passed;
-   with handoff $0.225, without $0.212. The handoff call itself cost $0.011. No conclusion at n=1.
-5. **The most useful observation:** a budget-cap failure is an *uninformative* failure. The handoff for
-   `power_assoc` correctly reported "no code changes; diff empty; likely ran out of budget" and had little to
-   distill. A handoff can only carry information the cheap attempt produced. That means the escalation gate matters
-   more than the handoff format: escalate on *wrong patch*, not on *no patch* (Darwin Cascade's empty-patch gate
-   is the opposite policy: retry cheap on empty, and their data supports it).
+1. **Orientation works.** B matched A at 5/5 for 32% less, including the brief's cost. The zero-token scan alone
+   ranks the right file top-3 for every bug (`tests/test_preflight.py::test_scan_ranks_the_right_file_for_each_bug`).
+2. **The cascade never escalated** in C or D: briefed haiku solved everything, including the L bug. Good for
+   "start cheap", useless for testing the handoff. C ≈ B ≈ D; the spread is run-to-run noise.
+3. **Forced escalation lost money.** E (4-tool-call cap) cost 16% more than sonnet alone. Three of five haiku
+   attempts hit the cap with an empty diff. F was cheaper only because haiku happened to finish inside the cap
+   4 times out of 5; the E–F gap is variance in *whether haiku finished*, not the handoff.
+4. **Handoff vs clean restart: one paired point.** Both E and F escalated on `unit_to_base`; both passed;
+   $0.225 with handoff vs $0.212 without. No conclusion at n = 1.
+5. **A budget-cap failure is uninformative.** The `power_assoc` handoff correctly said "no code changes, diff
+   empty" and had nothing to distill. A handoff can only carry what the cheap attempt produced, so the gate
+   decides whether the cheap attempt is an investment or a tax. (Darwin Cascade's gate is the mirror image:
+   retry cheap on *empty* patch. Their data supports it.)
 
-### Read this before believing the table
+<details>
+<summary><b>Caveats: read before believing the table</b></summary>
 
-- **n=5, one run each.** Agent runs are stochastic. This is a pilot that shows the harness works and where the
-  effect is plausible, not a result. `python bench/run_bench.py --redo` reruns everything; the table regenerates.
-- **Toy repo.** ~300 lines, 7 files. Orientation cost is small here, so the *brief* arm understates the benefit
-  it would have on a real 50k-line codebase, and the *cascade* overstates how often haiku wins.
-- **The cheap tier is very cheap.** Haiku vs sonnet is ~3-5x on list price. A cascade beating cold-strong on cost
-  is nearly guaranteed when the cheap tier wins; the interesting cells are the ones where it doesn't (arm E).
-- **Fixed CLI overhead.** Every `claude -p` call carries ~7k tokens of harness prompt (it was 88k before
-  `--strict-mcp-config`; see `preflight/llm.py`). It's the same across arms so it doesn't bias comparisons,
-  but it means absolute costs are higher than a raw API call would be.
+- **One run per cell.** Agent runs are stochastic; ±10% between identical arms is normal here.
+- **Toy repo.** Orientation is cheap on 7 files, so B understates the brief's value on a 50k-line codebase, and
+  C/D overstate how often haiku wins.
+- **Haiku is very cheap** (3–5× under sonnet on list price). A cascade beating cold-strong is nearly guaranteed
+  when the cheap tier wins; the informative cells are the ones where it doesn't.
+- **~7k tokens of fixed CLI overhead per call**, identical across arms. Absolute costs are higher than raw API.
+- **Bugs were seeded by us.** A seeded bug has a known one-line fix; real issues often don't.
+</details>
 
-## On a real repo
-
-`examples/click_progressbar_BRIEF.md` is the brief for a symptom-only issue against a fresh clone of
-[pallets/click](https://github.com/pallets/click) (~100 files): **$0.018, 14 s, 11k tokens.** It puts
-`src/click/_termui_impl.py` first (that is where `ProgressBar` lives), names the test file and the `-k progressbar`
-selector, calls it M / mid, and warns not to change the `update(n)` signature. That is the orientation the agent
-would otherwise pay a frontier model to rediscover.
-
-## Try it
+### Reproduce
 
 ```bash
-# what the LLM sees about the repo: deterministic, zero tokens
-python -m preflight scan  path/to/repo "users report X happens when Y"
-
-# the brief (haiku by default)
-python -m preflight brief path/to/repo "users report X happens when Y" -o BRIEF.md
-
-# one attempt at a tier, tests decide pass/fail; works on a temp copy, never touches your tree
-python -m preflight run   path/to/repo "..." --brief BRIEF.md --model haiku
-
-# cheap first, escalate with handoff on failure
-python -m preflight cascade path/to/repo "..." --tiers haiku,sonnet
-python -m preflight cascade path/to/repo "..." --tiers haiku,sonnet --cheap-max-turns 6   # keep failure cheap
-
-# distill a failed attempt into a v2 brief by hand
-python -m preflight handoff "issue text" BRIEF.md failed_attempt.log -o BRIEF.v2.md
-
-# the experiment
-python bench/run_bench.py            # arms A,B,C; resumable; skips (bug, arm) pairs already recorded
+python -m pytest -q                                  # 12 tests: scan ranking, size parsing, every bug breaks the target
+python bench/run_bench.py                            # arms A,B,C; resumable
 python bench/run_bench.py --arms D_cascade_nohandoff,E_capped_handoff,F_capped_nohandoff --cheap-turns 4
 python bench/run_bench.py --redo --bugs power_assoc --arms C_cascade
-python -m pytest -q                  # preflight's own tests (scan ranking, size parsing, every bug breaks the target)
 ```
 
-Requires Python 3.11+ and the `claude` CLI logged in. No other dependencies.
+The table above is regenerated into this README on every run.
+
+## What we found while building it
+
+- **The handoff model hallucinated tool calls.** The post-mortem is a no-tools text call; on the demo it emitted
+  fake `<function_calls>` blocks and invented a `parse_power()` function that doesn't exist. Sonnet still fixed the
+  bug (it read the code itself), but a handoff that fabricates is worse than none. Fixed by telling the model it has
+  no tools, grounding it with the zero-token scan (real file names), and stripping any tool-call markup
+  (`preflight/handoff.py::sanitize`, tested).
+- **88k tokens of CLI overhead per call** until `--strict-mcp-config`. Measure your harness before your prompt.
+- **A seeded bug that broke no test** slipped through until the guard test caught it. Every bench bug now has a
+  test proving it fails on the clean target.
+
+## Related work and what this adds
+
+Cascades and routers for coding agents are an active area: SWE-Router (route after a few cheap exploratory turns),
+Darwin Cascade (escalate on empty patch; 51% SWE-bench Lite at $0.27/instance), CodeRescue (learned cheap-retry vs
+escalate), RouteLLM. The brief half is what `AGENTS.md` and repo maps do statically. The contamination result
+(arxiv 2605.08563) says leaving a failed transcript in context makes retries worse; Reflexion says a structured
+post-mortem helps within one model.
+
+Not cleanly measured, as far as we found: whether a **distilled failure brief handed up a cascade beats a clean
+restart at the stronger tier.** Arms E vs F are the harness for that. This pilot's one paired point is a tie, and
+its real lesson is that with a budget-cap gate most cheap failures are empty. Run it with a *wrong-patch* gate on
+a repo where haiku produces wrong patches.
+
+## Next
+
+- Gate on "non-empty patch, tests still fail" instead of a turn cap, so escalations are informative.
+- Arm G: raw-transcript handoff, to measure contamination directly against C (distilled) and D (clean).
+- n ≥ 10 per cell; then SWE-bench Lite instances with the same arms.
+- Use the brief's tier call to pick the *first* tier instead of always starting at haiku.
+- Cache the scan and conventions per repo; only "Start here" is per-issue.
 
 ## Layout
 
 ```
 preflight/
-  scan.py      deterministic repo scan: tree, README, test cmd, conventions, keyword-ranked files (zero tokens)
+  scan.py      deterministic repo scan (tree, README, test cmd, conventions, keyword-ranked files)
   brief.py     scan -> BRIEF.md via cheap model; parses size/tier; heuristic size as a sanity check
   run.py       one attempt in a fresh git-initialised copy; tests decide; captures diff + transcript
-  handoff.py   failed attempt -> structured post-mortem brief for the next tier
+  handoff.py   failed attempt -> grounded post-mortem brief; strips hallucinated tool calls
   cascade.py   tiers in order, handoff between them, per-stage cost accounting
-  llm.py       `claude -p` wrapper returning text + cost + tokens
+  llm.py       `claude -p` wrapper: text + cost + tokens
+  log.py       stage-by-stage progress to stderr
 bench/
-  target/      calcx: the clean repo (21 tests, all green)
+  target/      calcx, the clean repo (21 tests)
   bugs.py      5 seeded mutations (S,S,M,M,L) + human-style issue text
-  run_bench.py arms A-F, per-run JSON records, results.json, markdown table (also injected above)
+  run_bench.py arms A-F; per-run JSON records are the source of truth; regenerates the table above
+  results/     results.json, table.md, runs/*.json
+examples/      brief on pallets/click
+tests/         preflight's own tests
 ```
 
-## What's already known, and what this adds
-
-Model cascades and routers for coding agents are an active area: SWE-Router (route after a few cheap exploratory
-turns), Darwin Cascade (escalate on empty patch, 51% SWE-bench Lite at $0.27/instance), CodeRescue (learned
-cheap-retry vs escalate), RouteLLM. The *brief* half is what `AGENTS.md` / repo maps do statically.
-
-What is not cleanly measured, as far as we found: whether a **distilled failure brief** handed up a cascade beats
-a **clean restart** at the stronger tier. The contamination result says raw retries hurt; Reflexion says structured
-post-mortems help within a model. `preflight` is the harness to test that in the cross-tier case (arms E vs F);
-this run is the pilot, and its one paired data point is a tie. The pilot's real lesson is upstream of that
-question: with a budget-cap gate most cheap failures are empty, so there is nothing to hand off. Run it with a
-*wrong-patch* gate on a repo hard enough that haiku actually produces wrong patches.
-
-## Cut list (what a longer version does)
-
-- Arm G: raw-transcript handoff, to measure contamination directly against D (clean) and C (distilled).
-- n=10+ per cell. Every cell above is one stochastic agent run.
-- Escalation gate: "tests still fail after a non-empty patch" instead of a turn cap, so failures are informative.
-- Brief caching per repo: the scan and conventions are reusable across issues; only "Start here" is per-issue.
-- Use the brief's tier recommendation to *choose* the first tier instead of always starting at haiku.
-- Real repos: run on SWE-bench Lite instances with the same arms.
+Security note: attempts run `claude` with `--dangerously-skip-permissions` inside the scratch copy. The copy
+isolates your tree, not your machine; the agent can still run shell commands. Don't point it at anything you
+wouldn't let a contractor `rm -rf`.

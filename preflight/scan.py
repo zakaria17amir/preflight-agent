@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -14,8 +15,9 @@ STOPWORDS = {"the", "a", "an", "and", "or", "of", "to", "in", "is", "it", "that"
              "on", "be", "not", "should", "but", "are", "as", "at", "by", "from", "if", "we", "i", "you", "does",
              "doesn", "t", "s", "returns", "return", "error", "bug", "fix", "instead", "gets", "get", "wrong"}
 
+PYTEST = f'"{sys.executable}" -m pytest -q'  # don't assume `pytest` is on PATH
 TEST_HINTS = [
-    ("pyproject.toml", "pytest"), ("pytest.ini", "pytest"), ("setup.cfg", "pytest"), ("tox.ini", "pytest"),
+    ("pyproject.toml", PYTEST), ("pytest.ini", PYTEST), ("setup.cfg", PYTEST), ("tox.ini", PYTEST),
     ("package.json", "npm test"), ("Cargo.toml", "cargo test"), ("go.mod", "go test ./..."),
     ("pom.xml", "mvn test"), ("build.gradle", "gradle test"), ("Gemfile", "bundle exec rspec"),
 ]
@@ -76,7 +78,7 @@ def detect_test_cmd(root: Path, tree: list[str]) -> str:
         if fname in names:
             return cmd
     if any(p.endswith((".py",)) for p in tree):
-        return "pytest -q"
+        return PYTEST
     return "unknown"
 
 

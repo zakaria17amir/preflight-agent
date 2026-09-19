@@ -34,13 +34,22 @@ def test_scan_ranks_the_right_file_for_each_bug():
 
 def test_scan_detects_test_command_and_renders():
     s = scan(TARGET, "anything")
-    assert s.test_cmd.startswith("pytest")
+    assert "pytest" in s.test_cmd
     out = render(s)
     assert "# File tree:" in out and "calcx/parser.py" in out
 
 
 def test_heuristic_size_is_a_letter():
     assert heuristic_size(scan(TARGET, BUGS["fahrenheit"]["issue"])) in {"S", "M", "L"}
+
+
+def test_handoff_sanitize_strips_fake_tool_calls():
+    from preflight.handoff import sanitize
+    raw = ("I'll analyze the codebase first.\n<function_calls>\n<invoke name=\"read\">\n<parameter name=\"path\">x.py"
+           "</parameter>\n</invoke>\n</function_calls>\n## Start here\n1. calcx/parser.py\n")
+    clean, had = sanitize(raw)
+    assert had and clean.startswith("## Start here") and "<invoke" not in clean
+    assert sanitize("## Start here\n- ok\n") == ("## Start here\n- ok", False)
 
 
 def test_parse_size_tier():

@@ -6,8 +6,9 @@ from pathlib import Path
 
 from .brief import make_brief
 from .handoff import make_handoff
+from .log import say
 from .run import Attempt, attempt
-from .scan import scan
+from .scan import render, scan
 
 
 @dataclass
@@ -50,11 +51,12 @@ class CascadeResult:
 def cascade(root: Path, issue: str, tiers: list[str], test_cmd: str | None = None, use_brief: bool = True,
             use_handoff: bool = True, brief_model: str = "haiku", cheap_max_turns: int | None = None) -> CascadeResult:
     """Run `tiers` in order. `cheap_max_turns` caps every tier except the last, so a failed cheap attempt stays cheap."""
-    test_cmd = test_cmd or scan(root, issue).test_cmd
+    s = scan(root, issue)
+    test_cmd = test_cmd or s.test_cmd
     out = CascadeResult(passed=False)
     brief_text = None
     if use_brief:
-        brief_text, bres, _ = make_brief(root, issue, model=brief_model)
+        brief_text, bres, s = make_brief(root, issue, model=brief_model)
         out.brief = brief_text
         out.stages.append(Stage("brief", bres.cost_usd, bres.total_tokens, bres.duration_ms / 1000, model=bres.model))
     for i, tier in enumerate(tiers):
@@ -65,10 +67,16 @@ def cascade(root: Path, issue: str, tiers: list[str], test_cmd: str | None = Non
         out.stages.append(Stage(f"attempt{i+1}", a.cost_usd, a.tokens, a.seconds, passed=a.passed, model=a.model))
         if a.passed:
             out.passed = True
+            say(f"solved at tier {i+1} ({tier}); total so far ${out.cost_usd:.4f}")
             break
-        if i + 1 < len(tiers) and use_handoff:
+        if is_last:
+            say(f"tier {i+1} ({tier}) failed and it was the last tier")
+            break
+        say(f"tier {i+1} ({tier}) failed -> escalating to {tiers[i+1]} "
+            f"{'with handoff' if use_handoff else 'with a clean restart (original brief)'}")
+        if use_handoff:
             h_text, hres = make_handoff(issue, brief_text or "(no brief was given)", a.transcript_for_handoff(),
-                                        model=brief_model)
+                                        model=brief_model, scan_text=render(s, max_tree=60))
             out.handoff = h_text
             brief_text = h_text
             out.stages.append(Stage("handoff", hres.cost_usd, hres.total_tokens, hres.duration_ms / 1000, model=hres.model))

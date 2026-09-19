@@ -1,0 +1,19 @@
+{
+ "passed": true,
+ "cost": 0.0830502,
+ "tokens": 161837,
+ "turns": 5,
+ "seconds": 16.31160807609558,
+ "stages": [
+  {
+   "name": "attempt1",
+   "model": "sonnet",
+   "cost": 0.0830502,
+   "tokens": 161837,
+   "passed": true
+  }
+ ],
+ "tests": "21 passed in 0.04s",
+ "summary": "calcx/report.py \u2014 root cause: the ok/error check compared `startswith(\"Error:\")` while errors are actually formatted as lowercase `\"error: ...\"`, so the string never matched and every row counted as ok. Tests: 21 passed.",
+ "wall": 18.346243381500244
+}

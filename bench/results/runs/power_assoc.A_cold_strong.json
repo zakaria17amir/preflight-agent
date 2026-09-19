@@ -1,0 +1,19 @@
+{
+ "passed": true,
+ "cost": 0.09236559999999999,
+ "tokens": 196528,
+ "turns": 6,
+ "seconds": 22.0372474193573,
+ "stages": [
+  {
+   "name": "attempt1",
+   "model": "sonnet",
+   "cost": 0.09236559999999999,
+   "tokens": 196528,
+   "passed": true
+  }
+ ],
+ "tests": "21 passed in 0.04s",
+ "summary": "Files changed: calcx/parser.py \u2014 root cause: `parse_expr` always recursed with `prec+1`, making `^`/`**` left-associative despite `RIGHT_ASSOC` being defined but unused; now right-associative ops recurse with `prec` instead. Tests: 21/21 passed, and manually verified `2^3^2` and `2**3**2` now equal 512.",
+ "wall": 24.146645069122314
+}

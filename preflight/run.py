@@ -9,7 +9,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import llm
-from .scan import scan
+from .log import block, say
+from .scan import IGNORE_DIRS, scan
 
 ATTEMPT_SYSTEM = (
     "You are a coding agent fixing a bug in the repository in the current working directory. "
@@ -74,7 +75,7 @@ def run_tests(root: Path, test_cmd: str, timeout: int = 300) -> TestResult:
 
 def fresh_copy(root: Path) -> Path:
     dst = Path(tempfile.mkdtemp(prefix="preflight_")) / root.name
-    shutil.copytree(root, dst, ignore=shutil.ignore_patterns(".git", "__pycache__", ".pytest_cache", ".preflight"))
+    shutil.copytree(root, dst, ignore=shutil.ignore_patterns(*IGNORE_DIRS))
     subprocess.run(["git", "init", "-q"], cwd=dst, check=True)
     subprocess.run(["git", "config", "core.autocrlf", "false"], cwd=dst, check=True)
     subprocess.run(["git", "add", "-A"], cwd=dst, check=True)
@@ -97,6 +98,8 @@ def attempt(root: Path, issue: str, brief: str | None = None, model: str = "haik
     test_cmd = test_cmd or scan(root, issue).test_cmd
     prompt = (ATTEMPT_PROMPT_BRIEFED.format(issue=issue, brief=brief) if brief
               else ATTEMPT_PROMPT_COLD.format(issue=issue))
+    say(f"attempt: {model}{f' (budget {max_turns} tool calls)' if max_turns else ''}, "
+        f"{'with brief' if brief else 'cold'}, working in {wd}")
     t0 = time.time()
     try:
         res = llm.call(prompt, model=model, cwd=wd, agentic=True, timeout=timeout, system=ATTEMPT_SYSTEM,
@@ -107,6 +110,10 @@ def attempt(root: Path, issue: str, brief: str | None = None, model: str = "haik
     except subprocess.TimeoutExpired:
         text, cost, tok, turns = "(agent timed out)", 0.0, 0, 0
     secs = time.time() - t0
+    say(f"agent done in {secs:.0f}s, {turns} turns, ${cost:.4f}; running `{test_cmd}`")
     tests = run_tests(wd, test_cmd)
+    diff = git_diff(wd)
+    say(f"tests {'PASS' if tests.passed else 'FAIL'}: {tests.summary}")
+    block(f"diff from {model}" + ("" if diff.strip() else " (empty)"), diff or "(agent made no changes)", max_lines=40)
     return Attempt(model=model, passed=tests.passed, cost_usd=cost, tokens=tok, turns=turns, seconds=secs,
-                   tests=tests, agent_summary=text, diff=git_diff(wd), workdir=wd)
+                   tests=tests, agent_summary=text, diff=diff, workdir=wd)
