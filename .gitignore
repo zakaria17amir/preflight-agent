@@ -5,4 +5,5 @@ __pycache__/
 bench/results/*.log
 /BRIEF*.md
 /ISSUE.md
-.devin/*site/
+.devin/*
+site/
