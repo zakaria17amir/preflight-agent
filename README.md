@@ -80,6 +80,14 @@ Full per-run records with briefs, handoffs, diffs and test output: `bench/result
   `--strict-mcp-config`; see `preflight/llm.py`). It's the same across arms so it doesn't bias comparisons,
   but it means absolute costs are higher than a raw API call would be.
 
+## On a real repo
+
+`examples/click_progressbar_BRIEF.md` is the brief for a symptom-only issue against a fresh clone of
+[pallets/click](https://github.com/pallets/click) (~100 files): **$0.018, 14 s, 11k tokens.** It puts
+`src/click/_termui_impl.py` first (that is where `ProgressBar` lives), names the test file and the `-k progressbar`
+selector, calls it M / mid, and warns not to change the `update(n)` signature. That is the orientation the agent
+would otherwise pay a frontier model to rediscover.
+
 ## Try it
 
 ```bash
