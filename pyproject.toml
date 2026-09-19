@@ -1,0 +1,12 @@
+[project]
+name = "preflight"
+version = "0.1.0"
+description = "Brief the agent, size the job, start cheap."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+preflight = "preflight.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

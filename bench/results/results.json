@@ -1,0 +1,125 @@
+{
+ "fahrenheit": {
+  "B_brief_cheap": {
+   "passed": true,
+   "cost": 0.0666398,
+   "tokens": 117160,
+   "turns": 5,
+   "seconds": 37.18780563545227,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.019122999999999998,
+     "tokens": 7801
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.0475168,
+     "tokens": 109359,
+     "passed": true
+    }
+   ],
+   "tests": "20 passed in 0.07s",
+   "summary": "**Files changed:** `calcx/units.py` line 20  \n**Root cause:** Fahrenheit's `from_base` conversion used the wrong ratio (5/9 instead of 9/5), inverting the Celsius-to-Fahrenheit multiplier. The `to_base` (F\u2192K) was correct; only the reverse direction was broken.  \n**Test status:** All 20 tests pass \u2713",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0191 | tokens=7801 | size=S tier=cheap | heuristic_size=S -->\n# Brief\n\n## Start here\n\n1. **calcx/units.py** \u2014 temperature conversion formulas live here; C\u2192K works so the bug is in C\u2192F logic\n2. **tests/test_calcx.py** \u2014 verify test structure and find/add temperature conversion tests\n3. **calcx/evaluator.py** \u2014 see how units.py is called during expression evaluation\n\n## Conventions\n\n- Type hints required (Python 3.10+)\n- Tests in `tests/test_calcx.py` using pytest\n- Unit conversion likely uses a dict-based formula lookup or function registry\n\n## Verify\n\n```bash\npytest -q\n```\n\nPassing test: `calc(\"to(100, C, F)\")` should return 212 (or equivalent expression the codebase uses).\n\n## Risks\n\n- C\u2192K works, so offset-based conversions are not inherently broken; isolated to F formula\n- Don't touch the tokenizer/parser\u2014this is pure calculation\n- Temperature scales use both ratio (\u00d79/5) and offset (+32); confirm the order\n\n## Size\n\n**S** \u2014 Single-file fix in units.py; wrong constant or formula in the Celsius\u2192Fahrenheit conversion.\n\n## Tier\n\n**cheap** \u2014 Straightforward arithmetic bug in a conversion formula; no design changes needed.\n",
+   "wall": 41.42022371292114
+  },
+  "A_cold_strong": {
+   "passed": true,
+   "cost": 0.1049162,
+   "tokens": 229159,
+   "turns": 7,
+   "seconds": 27.290685176849365,
+   "stages": [
+    {
+     "name": "attempt1",
+     "model": "sonnet",
+     "cost": 0.1049162,
+     "tokens": 229159,
+     "passed": true
+    }
+   ],
+   "tests": "20 passed in 0.04s",
+   "summary": "100 C now correctly converts to 212 F, and all 20 tests pass.\n\n- Files changed: `calcx/units.py`\n- Root cause: the Kelvin\u2192Fahrenheit formula used `* 5 / 9` instead of `* 9 / 5`\n- Test status: all 20 tests pass",
+   "wall": 29.210981130599976
+  }
+ },
+ "report_counter": {
+  "A_cold_strong": {
+   "passed": true,
+   "cost": 0.08154639999999999,
+   "tokens": 161222,
+   "turns": 5,
+   "seconds": 15.338751077651978,
+   "stages": [
+    {
+     "name": "attempt1",
+     "model": "sonnet",
+     "cost": 0.08154639999999999,
+     "tokens": 161222,
+     "passed": true
+    }
+   ],
+   "tests": "20 passed in 0.04s",
+   "summary": "Files changed: calcx/report.py \u2014 root cause was a case mismatch: errors are formatted as `\"error: ...\"` (lowercase) but the ok-count check filtered on `\"Error:\"` (capital), so no row was ever excluded \u2014 test status: 20 passed.",
+   "wall": 17.351022005081177
+  },
+  "B_brief_cheap": {
+   "passed": true,
+   "cost": 0.06518230000000001,
+   "tokens": 200534,
+   "turns": 8,
+   "seconds": 44.03709222793579,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.010724500000000001,
+     "tokens": 8543
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.05445780000000001,
+     "tokens": 191991,
+     "passed": true
+    }
+   ],
+   "tests": "20 passed in 0.04s",
+   "summary": "**Summary:**\n- **File changed:** `calcx/report.py:33` \u2014 Fixed error detection in summary count from `\"Error:\"` to `\"error:\"` to match the actual error row format\n- **Root cause:** The `format_report()` function was checking for capitalized `\"Error:\"` when error rows are formatted as `\"error:\"` (lowercase), causing all rows to be counted as successful\n- **Test status:** All 20 tests pass; summary line now correctly shows `2/3 ok` for batches with 1 error among 3 rows",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0107 | tokens=8543 | size=S tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n1. **calcx/report.py** \u2014 `format_report()` at L24 builds the summary line; verify how it counts success vs. error rows\n2. **calcx/report.py** \u2014 `evaluate_batch()` at L13 returns the rows; check what an error row looks like (second element of tuple)\n3. **tests/test_calcx.py** \u2014 find tests that exercise batch evaluation with errors to understand expected output format\n4. **calcx/evaluator.py** \u2014 understand what error strings/types are returned vs. numeric results\n5. **calcx/tokenizer.py** or **calcx/parser.py** \u2014 check what errors can be raised during expression evaluation\n\n## Conventions\n- Maintain type hints (`tuple[str, str]` for result rows, `list[str]` for input, etc.)\n- Tests in `tests/test_calcx.py`; run with `pytest -q`\n- Error rows are represented as tuples with the expression and an error message string\n- Summary line format is `N/N ok` \u2014 need logic to distinguish error rows from successful ones\n\n## Verify\n```\npytest -q\npytest -q tests/test_calcx.py::test_convert_linear  # or similar batch/error test\n```\nProof: a test case with 3 rows where 1 fails should show `2/3 ok`, not `3/3 ok`\n\n## Risks\n- The row format (`tuple[str, str]`) doesn't distinguish errors by type \u2014 likely errors are detected by checking the second element (e.g., non-numeric string, contains \"error\" keyword, or comparison against evaluator return value)\n- Don't break the formatting of individual result rows themselves\n- Don't change the signature of `format_report()` or `evaluate_batch()`\n\n## Size\n**S** \u2014 Single-file fix in `report.py`, likely 1\u20133 lines in the summary counting logic of `format_report()`.\n\n## Tier\n**cheap** \u2014 Straightforward logic bug in one function; no design changes or cross-module refactoring needed.\n",
+   "wall": 48.174519062042236
+  },
+  "C_cascade": {
+   "passed": true,
+   "cost": 0.07763130000000001,
+   "tokens": 232041,
+   "turns": 11,
+   "seconds": 55.5828475894928,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.015051500000000002,
+     "tokens": 9412,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.0625798,
+     "tokens": 222629,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.04s",
+   "summary": "Perfect! All tests pass including the new test case. Let me verify the fix by looking at what changed:\n\n**Files changed:**\n1. `calcx/report.py` \u2014 Fixed the summary line counting logic (line 33)\n2. `tests/test_calcx.py` \u2014 Added test case for mixed valid/error results\n\n**Root cause:**\nThe bug was a case-sensitivity mismatch. Line 20 formats errors as `\"error: {err}\"` (lowercase), but line 33 was checking for `\"Error:\"` (capital E). This meant no rows were ever identified as errors, so all rows were counted as \"ok\".\n\n**Test status:**\nAll 21 tests pass \u2713 (including the new test that validates the ",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0151 | tokens=9412 | size=M tier=mid | heuristic_size=M -->\n# Brief\n\n## Start here\n- `calcx/report.py` \u2014 has `format_report()` and `evaluate_batch()`, the summary line is generated here\n- `tests/test_calcx.py` \u2014 shows expected behavior; look for or add a test with mixed valid/error results\n- `calcx/evaluator.py` \u2014 need to see how errors are represented in the output tuples\n- `calcx/units.py` \u2014 defines data structures that flow through the pipeline\n\n## Conventions\n- Maintain type hints on all functions\n- Tests live in `tests/`; run with `pytest -q`\n- Don't change the public API of `calc()`, `evaluate_batch()`, or `format_report()`\n- Error representation in tuples must remain consistent with evaluator behavior\n\n## Verify\nRun `pytest -q` to verify all tests pass. The fix must be validated by a test case that calls `evaluate_batch()` with a mix of valid and invalid expressions and confirms the summary line counts only successful results (e.g., `2/3 ok` when one fails, not `3/3 ok`).\n\n## Risks\n- Don't change how errors are represented in the tuples returned by `evaluate_batch()`\n- Don't alter the report table structure itself\u2014only the summary counting logic\n- The fix is in the summary line only; don't refactor unrelated report generation code\n\n## Size\nM (2\u20133 files, localized behavior change). The fix is a small counting logic change in `report.py`, but requires understanding error representation in tuples and validating test coverage.\n\n## Tier\nmid. Straightforward counting bug in familiar territory, but needs understanding of how errors are encoded in the data structure to get the fix right.\n",
+   "handoff": "",
+   "final_tier": "haiku",
+   "wall": 59.43043375015259
+  }
+ }
+}
