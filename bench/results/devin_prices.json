@@ -1,0 +1,1987 @@
+{
+ "variants": {
+  "Claude Opus 5 Medium": {
+   "uid": "claude-opus-5-medium",
+   "family": "claude-opus-5",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 5 Low": {
+   "uid": "claude-opus-5-low",
+   "family": "claude-opus-5",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 5 High": {
+   "uid": "claude-opus-5-high",
+   "family": "claude-opus-5",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 5 XHigh": {
+   "uid": "claude-opus-5-xhigh",
+   "family": "claude-opus-5",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 5 Max": {
+   "uid": "claude-opus-5-max",
+   "family": "claude-opus-5",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 5 Low Fast": {
+   "uid": "claude-opus-5-low-fast",
+   "family": "claude-opus-5",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Claude Opus 5 Medium Fast": {
+   "uid": "claude-opus-5-medium-fast",
+   "family": "claude-opus-5",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Claude Opus 5 High Fast": {
+   "uid": "claude-opus-5-high-fast",
+   "family": "claude-opus-5",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Claude Opus 5 XHigh Fast": {
+   "uid": "claude-opus-5-xhigh-fast",
+   "family": "claude-opus-5",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Claude Opus 5 Max Fast": {
+   "uid": "claude-opus-5-max-fast",
+   "family": "claude-opus-5",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Claude Fable 5.1 Medium": {
+   "uid": "claude-fable-5-1-medium",
+   "family": "claude-fable-5.1",
+   "in": 10.0,
+   "cached": 0.25,
+   "out": 50.0
+  },
+  "Claude Fable 5.1 Low": {
+   "uid": "claude-fable-5-1-low",
+   "family": "claude-fable-5.1",
+   "in": 10.0,
+   "cached": 0.25,
+   "out": 50.0
+  },
+  "Claude Fable 5.1 High": {
+   "uid": "claude-fable-5-1-high",
+   "family": "claude-fable-5.1",
+   "in": 10.0,
+   "cached": 0.25,
+   "out": 50.0
+  },
+  "Claude Fable 5.1 XHigh": {
+   "uid": "claude-fable-5-1-xhigh",
+   "family": "claude-fable-5.1",
+   "in": 10.0,
+   "cached": 0.25,
+   "out": 50.0
+  },
+  "Claude Fable 5.1 Max": {
+   "uid": "claude-fable-5-1-max",
+   "family": "claude-fable-5.1",
+   "in": 10.0,
+   "cached": 0.25,
+   "out": 50.0
+  },
+  "Claude Sonnet 5 Medium": {
+   "uid": "claude-sonnet-5-medium",
+   "family": "claude-sonnet-5",
+   "in": 2.0,
+   "cached": 0.2,
+   "out": 10.0
+  },
+  "Claude Sonnet 5 Low": {
+   "uid": "claude-sonnet-5-low",
+   "family": "claude-sonnet-5",
+   "in": 2.0,
+   "cached": 0.2,
+   "out": 10.0
+  },
+  "Claude Sonnet 5 High": {
+   "uid": "claude-sonnet-5-high",
+   "family": "claude-sonnet-5",
+   "in": 2.0,
+   "cached": 0.2,
+   "out": 10.0
+  },
+  "Claude Sonnet 5 XHigh": {
+   "uid": "claude-sonnet-5-xhigh",
+   "family": "claude-sonnet-5",
+   "in": 2.0,
+   "cached": 0.2,
+   "out": 10.0
+  },
+  "Claude Sonnet 5 Max": {
+   "uid": "claude-sonnet-5-max",
+   "family": "claude-sonnet-5",
+   "in": 2.0,
+   "cached": 0.2,
+   "out": 10.0
+  },
+  "Gemini 3.8 Flash Medium": {
+   "uid": "gemini-3-8-flash-medium",
+   "family": "gemini-3.8-flash",
+   "in": 0.75,
+   "cached": 0.08,
+   "out": 3.75
+  },
+  "Gemini 3.8 Flash Low": {
+   "uid": "gemini-3-8-flash-low",
+   "family": "gemini-3.8-flash",
+   "in": 0.75,
+   "cached": 0.08,
+   "out": 3.75
+  },
+  "Gemini 3.8 Flash High": {
+   "uid": "gemini-3-8-flash-high",
+   "family": "gemini-3.8-flash",
+   "in": 0.75,
+   "cached": 0.08,
+   "out": 3.75
+  },
+  "GPT-5.6 Sol Medium Thinking": {
+   "uid": "gpt-5-6-sol-medium",
+   "family": "gpt-5.6-sol",
+   "in": 1.2,
+   "cached": 0.12,
+   "out": 6.0
+  },
+  "GPT-5.6 Sol No Thinking": {
+   "uid": "gpt-5-6-sol-none",
+   "family": "gpt-5.6-sol",
+   "in": 1.2,
+   "cached": 0.12,
+   "out": 6.0
+  },
+  "GPT-5.6 Sol Low Thinking": {
+   "uid": "gpt-5-6-sol-low",
+   "family": "gpt-5.6-sol",
+   "in": 1.2,
+   "cached": 0.12,
+   "out": 6.0
+  },
+  "GPT-5.6 Sol High Thinking": {
+   "uid": "gpt-5-6-sol-high",
+   "family": "gpt-5.6-sol",
+   "in": 1.2,
+   "cached": 0.12,
+   "out": 6.0
+  },
+  "GPT-5.6 Sol XHigh Thinking": {
+   "uid": "gpt-5-6-sol-xhigh",
+   "family": "gpt-5.6-sol",
+   "in": 1.2,
+   "cached": 0.12,
+   "out": 6.0
+  },
+  "GPT-5.6 Sol Max Thinking": {
+   "uid": "gpt-5-6-sol-max",
+   "family": "gpt-5.6-sol",
+   "in": 1.2,
+   "cached": 0.12,
+   "out": 6.0
+  },
+  "GPT-5.6 Sol No Thinking Fast": {
+   "uid": "gpt-5-6-sol-none-priority",
+   "family": "gpt-5.6-sol",
+   "in": 8.0,
+   "cached": 0.8,
+   "out": 40.0
+  },
+  "GPT-5.6 Sol Low Thinking Fast": {
+   "uid": "gpt-5-6-sol-low-priority",
+   "family": "gpt-5.6-sol",
+   "in": 8.0,
+   "cached": 0.8,
+   "out": 40.0
+  },
+  "GPT-5.6 Sol Medium Thinking Fast": {
+   "uid": "gpt-5-6-sol-medium-priority",
+   "family": "gpt-5.6-sol",
+   "in": 8.0,
+   "cached": 0.8,
+   "out": 40.0
+  },
+  "GPT-5.6 Sol High Thinking Fast": {
+   "uid": "gpt-5-6-sol-high-priority",
+   "family": "gpt-5.6-sol",
+   "in": 8.0,
+   "cached": 0.8,
+   "out": 40.0
+  },
+  "GPT-5.6 Sol XHigh Thinking Fast": {
+   "uid": "gpt-5-6-sol-xhigh-priority",
+   "family": "gpt-5.6-sol",
+   "in": 8.0,
+   "cached": 0.8,
+   "out": 40.0
+  },
+  "GPT-5.6 Sol Max Thinking Fast": {
+   "uid": "gpt-5-6-sol-max-priority",
+   "family": "gpt-5.6-sol",
+   "in": 8.0,
+   "cached": 0.8,
+   "out": 40.0
+  },
+  "GPT-5.6 Luna Medium Thinking": {
+   "uid": "gpt-5-6-luna-medium",
+   "family": "gpt-5.6-luna",
+   "in": 0.2,
+   "cached": 0.02,
+   "out": 1.2
+  },
+  "GPT-5.6 Luna No Thinking": {
+   "uid": "gpt-5-6-luna-none",
+   "family": "gpt-5.6-luna",
+   "in": 0.2,
+   "cached": 0.02,
+   "out": 1.2
+  },
+  "GPT-5.6 Luna Low Thinking": {
+   "uid": "gpt-5-6-luna-low",
+   "family": "gpt-5.6-luna",
+   "in": 0.2,
+   "cached": 0.02,
+   "out": 1.2
+  },
+  "GPT-5.6 Luna High Thinking": {
+   "uid": "gpt-5-6-luna-high",
+   "family": "gpt-5.6-luna",
+   "in": 0.2,
+   "cached": 0.02,
+   "out": 1.2
+  },
+  "GPT-5.6 Luna XHigh Thinking": {
+   "uid": "gpt-5-6-luna-xhigh",
+   "family": "gpt-5.6-luna",
+   "in": 0.2,
+   "cached": 0.02,
+   "out": 1.2
+  },
+  "GPT-5.6 Luna Max Thinking": {
+   "uid": "gpt-5-6-luna-max",
+   "family": "gpt-5.6-luna",
+   "in": 0.2,
+   "cached": 0.02,
+   "out": 1.2
+  },
+  "GPT-5.6 Luna No Thinking Fast": {
+   "uid": "gpt-5-6-luna-none-priority",
+   "family": "gpt-5.6-luna",
+   "in": 0.4,
+   "cached": 0.04,
+   "out": 2.4
+  },
+  "GPT-5.6 Luna Low Thinking Fast": {
+   "uid": "gpt-5-6-luna-low-priority",
+   "family": "gpt-5.6-luna",
+   "in": 0.4,
+   "cached": 0.04,
+   "out": 2.4
+  },
+  "GPT-5.6 Luna Medium Thinking Fast": {
+   "uid": "gpt-5-6-luna-medium-priority",
+   "family": "gpt-5.6-luna",
+   "in": 0.4,
+   "cached": 0.04,
+   "out": 2.4
+  },
+  "GPT-5.6 Luna High Thinking Fast": {
+   "uid": "gpt-5-6-luna-high-priority",
+   "family": "gpt-5.6-luna",
+   "in": 0.4,
+   "cached": 0.04,
+   "out": 2.4
+  },
+  "GPT-5.6 Luna XHigh Thinking Fast": {
+   "uid": "gpt-5-6-luna-xhigh-priority",
+   "family": "gpt-5.6-luna",
+   "in": 0.4,
+   "cached": 0.04,
+   "out": 2.4
+  },
+  "GPT-5.6 Luna Max Thinking Fast": {
+   "uid": "gpt-5-6-luna-max-priority",
+   "family": "gpt-5.6-luna",
+   "in": 0.4,
+   "cached": 0.04,
+   "out": 2.4
+  },
+  "GPT-6 Astra Medium Thinking": {
+   "uid": "gpt-6-astra-medium",
+   "family": "gpt-6-astra",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "GPT-6 Astra Low Thinking": {
+   "uid": "gpt-6-astra-low",
+   "family": "gpt-6-astra",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "GPT-6 Astra High Thinking": {
+   "uid": "gpt-6-astra-high",
+   "family": "gpt-6-astra",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "GPT-6 Astra XHigh Thinking": {
+   "uid": "gpt-6-astra-xhigh",
+   "family": "gpt-6-astra",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "GPT-6 Astra Max Thinking": {
+   "uid": "gpt-6-astra-max",
+   "family": "gpt-6-astra",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "GPT-6 Astra Low Thinking Fast": {
+   "uid": "gpt-6-astra-low-priority",
+   "family": "gpt-6-astra",
+   "in": 20.0,
+   "cached": 2.0,
+   "out": 100.0
+  },
+  "GPT-6 Astra Medium Thinking Fast": {
+   "uid": "gpt-6-astra-medium-priority",
+   "family": "gpt-6-astra",
+   "in": 20.0,
+   "cached": 2.0,
+   "out": 100.0
+  },
+  "GPT-6 Astra High Thinking Fast": {
+   "uid": "gpt-6-astra-high-priority",
+   "family": "gpt-6-astra",
+   "in": 20.0,
+   "cached": 2.0,
+   "out": 100.0
+  },
+  "GPT-6 Astra XHigh Thinking Fast": {
+   "uid": "gpt-6-astra-xhigh-priority",
+   "family": "gpt-6-astra",
+   "in": 20.0,
+   "cached": 2.0,
+   "out": 100.0
+  },
+  "GPT-6 Astra Max Thinking Fast": {
+   "uid": "gpt-6-astra-max-priority",
+   "family": "gpt-6-astra",
+   "in": 20.0,
+   "cached": 2.0,
+   "out": 100.0
+  },
+  "GLM-5.2 High": {
+   "uid": "glm-5-2",
+   "family": "glm-5.2",
+   "in": 1.4,
+   "cached": 0.26,
+   "out": 4.4
+  },
+  "GLM-5.2 Max": {
+   "uid": "glm-5-2-max",
+   "family": "glm-5.2",
+   "in": 1.4,
+   "cached": 0.26,
+   "out": 4.4
+  },
+  "GLM-5.2 High 1M": {
+   "uid": "glm-5-2-1m",
+   "family": "glm-5.2",
+   "in": 1.4,
+   "cached": 0.26,
+   "out": 4.4
+  },
+  "GLM-5.2 Max 1M": {
+   "uid": "glm-5-2-max-1m",
+   "family": "glm-5.2",
+   "in": 1.4,
+   "cached": 0.26,
+   "out": 4.4
+  },
+  "GLM-5.2 No Thinking": {
+   "uid": "glm-5-2-none",
+   "family": "glm-5.2",
+   "in": 1.4,
+   "cached": 0.26,
+   "out": 4.4
+  },
+  "GLM-5.2 No Thinking 1M": {
+   "uid": "glm-5-2-none-1m",
+   "family": "glm-5.2",
+   "in": 1.4,
+   "cached": 0.26,
+   "out": 4.4
+  },
+  "Kimi K3 High": {
+   "uid": "kimi-k3-high",
+   "family": "kimi-k3",
+   "in": 3.0,
+   "cached": 0.3,
+   "out": 15.0
+  },
+  "Kimi K3 Low": {
+   "uid": "kimi-k3-low",
+   "family": "kimi-k3",
+   "in": 3.0,
+   "cached": 0.3,
+   "out": 15.0
+  },
+  "Kimi K3 Max": {
+   "uid": "kimi-k3-max",
+   "family": "kimi-k3",
+   "in": 3.0,
+   "cached": 0.3,
+   "out": 15.0
+  },
+  "GLM-5.3 Low": {
+   "uid": "glm-5-3-low",
+   "family": "glm-5.3",
+   "in": 1.4,
+   "cached": 0.26,
+   "out": 4.4
+  },
+  "GLM-5.3 High": {
+   "uid": "glm-5-3-high",
+   "family": "glm-5.3",
+   "in": 1.4,
+   "cached": 0.26,
+   "out": 4.4
+  },
+  "GLM-5.3 Max": {
+   "uid": "glm-5-3-max",
+   "family": "glm-5.3",
+   "in": 1.4,
+   "cached": 0.26,
+   "out": 4.4
+  },
+  "SWE-1.7 Lightning Max": {
+   "uid": "swe-1-7-lightning",
+   "family": "swe-1.7-lightning",
+   "in": 2.5,
+   "cached": 1.0,
+   "out": 12.5
+  },
+  "SWE-1.7 Lightning Medium": {
+   "uid": "swe-1-7-lightning-medium",
+   "family": "swe-1.7-lightning",
+   "in": 2.5,
+   "cached": 1.0,
+   "out": 12.5
+  },
+  "SWE-2 High": {
+   "uid": "swe-2-high",
+   "family": "swe-2",
+   "in": 0.0,
+   "cached": 0.0,
+   "out": 0.0
+  },
+  "SWE-2 Medium": {
+   "uid": "swe-2-medium",
+   "family": "swe-2",
+   "in": 0.0,
+   "cached": 0.0,
+   "out": 0.0
+  },
+  "SWE-2 Max": {
+   "uid": "swe-2-max",
+   "family": "swe-2",
+   "in": 0.0,
+   "cached": 0.0,
+   "out": 0.0
+  },
+  "Adaptive": {
+   "uid": "adaptive",
+   "family": "adaptive",
+   "in": 0.5,
+   "cached": 0.1,
+   "out": 2.0
+  },
+  "Claude Opus 4.7 Medium": {
+   "uid": "claude-opus-4-7-medium",
+   "family": "claude-opus-4.7",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 4.7 Low": {
+   "uid": "claude-opus-4-7-low",
+   "family": "claude-opus-4.7",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 4.7 High": {
+   "uid": "claude-opus-4-7-high",
+   "family": "claude-opus-4.7",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 4.7 XHigh": {
+   "uid": "claude-opus-4-7-xhigh",
+   "family": "claude-opus-4.7",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 4.7 Max": {
+   "uid": "claude-opus-4-7-max",
+   "family": "claude-opus-4.7",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 4.8 Medium": {
+   "uid": "claude-opus-4-8-medium",
+   "family": "claude-opus-4.8",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 4.8 Low": {
+   "uid": "claude-opus-4-8-low",
+   "family": "claude-opus-4.8",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 4.8 High": {
+   "uid": "claude-opus-4-8-high",
+   "family": "claude-opus-4.8",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 4.8 XHigh": {
+   "uid": "claude-opus-4-8-xhigh",
+   "family": "claude-opus-4.8",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 4.8 Max": {
+   "uid": "claude-opus-4-8-max",
+   "family": "claude-opus-4.8",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 4.8 Low Fast": {
+   "uid": "claude-opus-4-8-low-fast",
+   "family": "claude-opus-4.8",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Claude Opus 4.8 Medium Fast": {
+   "uid": "claude-opus-4-8-medium-fast",
+   "family": "claude-opus-4.8",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Claude Opus 4.8 High Fast": {
+   "uid": "claude-opus-4-8-high-fast",
+   "family": "claude-opus-4.8",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Claude Opus 4.8 XHigh Fast": {
+   "uid": "claude-opus-4-8-xhigh-fast",
+   "family": "claude-opus-4.8",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Claude Opus 4.8 Max Fast": {
+   "uid": "claude-opus-4-8-max-fast",
+   "family": "claude-opus-4.8",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Claude Fable 5 Low": {
+   "uid": "claude-5-fable-low",
+   "family": "claude-fable-5",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Claude Fable 5 Medium": {
+   "uid": "claude-5-fable-medium",
+   "family": "claude-fable-5",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Claude Fable 5 High": {
+   "uid": "claude-5-fable-high",
+   "family": "claude-fable-5",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Claude Fable 5 XHigh": {
+   "uid": "claude-5-fable-xhigh",
+   "family": "claude-fable-5",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Claude Fable 5 Max": {
+   "uid": "claude-5-fable-max",
+   "family": "claude-fable-5",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Gemini 3.5 Flash Minimal": {
+   "uid": "gemini-3-5-flash-minimal",
+   "family": "gemini-3.5-flash",
+   "in": 1.5,
+   "cached": 0.15,
+   "out": 9.0
+  },
+  "Gemini 3.5 Flash Low": {
+   "uid": "gemini-3-5-flash-low",
+   "family": "gemini-3.5-flash",
+   "in": 1.5,
+   "cached": 0.15,
+   "out": 9.0
+  },
+  "Gemini 3.5 Flash Medium": {
+   "uid": "gemini-3-5-flash-medium",
+   "family": "gemini-3.5-flash",
+   "in": 1.5,
+   "cached": 0.15,
+   "out": 9.0
+  },
+  "Gemini 3.5 Flash High": {
+   "uid": "gemini-3-5-flash-high",
+   "family": "gemini-3.5-flash",
+   "in": 1.5,
+   "cached": 0.15,
+   "out": 9.0
+  },
+  "Gemini 3.6 Flash Minimal": {
+   "uid": "gemini-3-6-flash-minimal",
+   "family": "gemini-3.6-flash",
+   "in": 1.5,
+   "cached": 0.15,
+   "out": 7.5
+  },
+  "Gemini 3.6 Flash Low": {
+   "uid": "gemini-3-6-flash-low",
+   "family": "gemini-3.6-flash",
+   "in": 1.5,
+   "cached": 0.15,
+   "out": 7.5
+  },
+  "Gemini 3.6 Flash Medium": {
+   "uid": "gemini-3-6-flash-medium",
+   "family": "gemini-3.6-flash",
+   "in": 1.5,
+   "cached": 0.15,
+   "out": 7.5
+  },
+  "Gemini 3.6 Flash High": {
+   "uid": "gemini-3-6-flash-high",
+   "family": "gemini-3.6-flash",
+   "in": 1.5,
+   "cached": 0.15,
+   "out": 7.5
+  },
+  "Gemini 3.7 Flash Low": {
+   "uid": "gemini-3-7-flash-low",
+   "family": "gemini-3.7-flash",
+   "in": 0.75,
+   "cached": 0.08,
+   "out": 3.75
+  },
+  "Gemini 3.7 Flash Medium": {
+   "uid": "gemini-3-7-flash-medium",
+   "family": "gemini-3.7-flash",
+   "in": 0.75,
+   "cached": 0.08,
+   "out": 3.75
+  },
+  "Gemini 3.7 Flash High": {
+   "uid": "gemini-3-7-flash-high",
+   "family": "gemini-3.7-flash",
+   "in": 0.75,
+   "cached": 0.08,
+   "out": 3.75
+  },
+  "GPT-5.6 Terra No Thinking": {
+   "uid": "gpt-5-6-terra-none",
+   "family": "gpt-5.6-terra",
+   "in": 2.0,
+   "cached": 0.2,
+   "out": 12.0
+  },
+  "GPT-5.6 Terra Low Thinking": {
+   "uid": "gpt-5-6-terra-low",
+   "family": "gpt-5.6-terra",
+   "in": 2.0,
+   "cached": 0.2,
+   "out": 12.0
+  },
+  "GPT-5.6 Terra Medium Thinking": {
+   "uid": "gpt-5-6-terra-medium",
+   "family": "gpt-5.6-terra",
+   "in": 2.0,
+   "cached": 0.2,
+   "out": 12.0
+  },
+  "GPT-5.6 Terra High Thinking": {
+   "uid": "gpt-5-6-terra-high",
+   "family": "gpt-5.6-terra",
+   "in": 2.0,
+   "cached": 0.2,
+   "out": 12.0
+  },
+  "GPT-5.6 Terra XHigh Thinking": {
+   "uid": "gpt-5-6-terra-xhigh",
+   "family": "gpt-5.6-terra",
+   "in": 2.0,
+   "cached": 0.2,
+   "out": 12.0
+  },
+  "GPT-5.6 Terra Max Thinking": {
+   "uid": "gpt-5-6-terra-max",
+   "family": "gpt-5.6-terra",
+   "in": 2.0,
+   "cached": 0.2,
+   "out": 12.0
+  },
+  "GPT-5.6 Terra No Thinking Fast": {
+   "uid": "gpt-5-6-terra-none-priority",
+   "family": "gpt-5.6-terra",
+   "in": 4.0,
+   "cached": 0.4,
+   "out": 24.0
+  },
+  "GPT-5.6 Terra Low Thinking Fast": {
+   "uid": "gpt-5-6-terra-low-priority",
+   "family": "gpt-5.6-terra",
+   "in": 4.0,
+   "cached": 0.4,
+   "out": 24.0
+  },
+  "GPT-5.6 Terra Medium Thinking Fast": {
+   "uid": "gpt-5-6-terra-medium-priority",
+   "family": "gpt-5.6-terra",
+   "in": 4.0,
+   "cached": 0.4,
+   "out": 24.0
+  },
+  "GPT-5.6 Terra High Thinking Fast": {
+   "uid": "gpt-5-6-terra-high-priority",
+   "family": "gpt-5.6-terra",
+   "in": 4.0,
+   "cached": 0.4,
+   "out": 24.0
+  },
+  "GPT-5.6 Terra XHigh Thinking Fast": {
+   "uid": "gpt-5-6-terra-xhigh-priority",
+   "family": "gpt-5.6-terra",
+   "in": 4.0,
+   "cached": 0.4,
+   "out": 24.0
+  },
+  "GPT-5.6 Terra Max Thinking Fast": {
+   "uid": "gpt-5-6-terra-max-priority",
+   "family": "gpt-5.6-terra",
+   "in": 4.0,
+   "cached": 0.4,
+   "out": 24.0
+  },
+  "Grok 4.5 Low": {
+   "uid": "grok-4-5-low",
+   "family": "grok-4.5",
+   "in": 2.0,
+   "cached": 0.3,
+   "out": 6.0
+  },
+  "Grok 4.5 Medium": {
+   "uid": "grok-4-5-medium",
+   "family": "grok-4.5",
+   "in": 2.0,
+   "cached": 0.3,
+   "out": 6.0
+  },
+  "Grok 4.5 High": {
+   "uid": "grok-4-5-high",
+   "family": "grok-4.5",
+   "in": 2.0,
+   "cached": 0.3,
+   "out": 6.0
+  },
+  "Inkling None": {
+   "uid": "inkling-none",
+   "family": "inkling",
+   "in": 1.4,
+   "cached": 0.26,
+   "out": 4.4
+  },
+  "Inkling Low": {
+   "uid": "inkling-low",
+   "family": "inkling",
+   "in": 1.4,
+   "cached": 0.26,
+   "out": 4.4
+  },
+  "Inkling Medium": {
+   "uid": "inkling-medium",
+   "family": "inkling",
+   "in": 1.4,
+   "cached": 0.26,
+   "out": 4.4
+  },
+  "Inkling High": {
+   "uid": "inkling-high",
+   "family": "inkling",
+   "in": 1.4,
+   "cached": 0.26,
+   "out": 4.4
+  },
+  "Inkling X-High": {
+   "uid": "inkling-xhigh",
+   "family": "inkling",
+   "in": 1.4,
+   "cached": 0.26,
+   "out": 4.4
+  },
+  "Inkling Max": {
+   "uid": "inkling-max",
+   "family": "inkling",
+   "in": 1.4,
+   "cached": 0.26,
+   "out": 4.4
+  },
+  "GLM-5.3 Flash Low": {
+   "uid": "glm-5-3-flash-low",
+   "family": "glm-5.3-flash",
+   "in": 0.15,
+   "cached": 0.03,
+   "out": 0.5
+  },
+  "GLM-5.3 Flash High": {
+   "uid": "glm-5-3-flash-high",
+   "family": "glm-5.3-flash",
+   "in": 0.15,
+   "cached": 0.03,
+   "out": 0.5
+  },
+  "GLM-5.3 Flash Max": {
+   "uid": "glm-5-3-flash-max",
+   "family": "glm-5.3-flash",
+   "in": 0.15,
+   "cached": 0.03,
+   "out": 0.5
+  },
+  "DeepSeek V4 Flash High": {
+   "uid": "deepseek-v4-flash-high",
+   "family": "deepseek-v4-flash",
+   "in": 0.14,
+   "cached": 0.03,
+   "out": 0.28
+  },
+  "DeepSeek V4 Flash Max": {
+   "uid": "deepseek-v4-flash-max",
+   "family": "deepseek-v4-flash",
+   "in": 0.14,
+   "cached": 0.03,
+   "out": 0.28
+  },
+  "DeepSeek V4.1 Flash High": {
+   "uid": "deepseek-v4-1-flash-high",
+   "family": "deepseek-v4.1-flash",
+   "in": 0.22,
+   "cached": 0.01,
+   "out": 0.66
+  },
+  "DeepSeek V4.1 Flash Max": {
+   "uid": "deepseek-v4-1-flash-max",
+   "family": "deepseek-v4.1-flash",
+   "in": 0.22,
+   "cached": 0.01,
+   "out": 0.66
+  },
+  "SWE-1.7 Max": {
+   "uid": "swe-1-7",
+   "family": "swe-1.7",
+   "in": 0.5,
+   "cached": 0.2,
+   "out": 2.5
+  },
+  "SWE-1.7 Medium": {
+   "uid": "swe-1-7-medium",
+   "family": "swe-1.7",
+   "in": 0.5,
+   "cached": 0.2,
+   "out": 2.5
+  },
+  "Fusion (Claude Fable 5.1 Medium + SWE-2 Medium)": {
+   "uid": "fusion-claude-fable-5-1-medium-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 0.25,
+   "out": 50.0
+  },
+  "Fusion (Claude Fable 5.1 High + SWE-2 Medium)": {
+   "uid": "fusion-claude-fable-5-1-high-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 0.25,
+   "out": 50.0
+  },
+  "Fusion (GPT-5.6 Sol High Thinking + SWE-2 Medium)": {
+   "uid": "fusion-gpt-5-6-sol-high-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 1.2,
+   "cached": 0.12,
+   "out": 6.0
+  },
+  "Fusion (GPT-5.6 Sol High Thinking Fast + SWE-2 Medium)": {
+   "uid": "fusion-gpt-5-6-sol-high-fast-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 8.0,
+   "cached": 0.8,
+   "out": 40.0
+  },
+  "Fusion (Claude Opus 5 High + SWE-2 Medium)": {
+   "uid": "fusion-claude-opus-5-high-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Fusion (Claude Opus 5 High Fast + SWE-2 Medium)": {
+   "uid": "fusion-claude-opus-5-high-fast-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra High Thinking + SWE-2 Medium)": {
+   "uid": "fusion-gpt-6-astra-high-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra High Thinking Fast + SWE-2 Medium)": {
+   "uid": "fusion-gpt-6-astra-high-fast-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 20.0,
+   "cached": 2.0,
+   "out": 100.0
+  },
+  "Fusion (GPT-5.6 Sol Medium Thinking + SWE-2 Medium)": {
+   "uid": "fusion-gpt-5-6-sol-medium-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 1.2,
+   "cached": 0.12,
+   "out": 6.0
+  },
+  "Fusion (GPT-5.6 Sol Medium Thinking Fast + SWE-2 Medium)": {
+   "uid": "fusion-gpt-5-6-sol-medium-fast-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 8.0,
+   "cached": 0.8,
+   "out": 40.0
+  },
+  "Fusion (Claude Opus 5 Medium + SWE-2 Medium)": {
+   "uid": "fusion-claude-opus-5-medium-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Fusion (Claude Opus 5 Medium Fast + SWE-2 Medium)": {
+   "uid": "fusion-claude-opus-5-medium-fast-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra Medium Thinking + SWE-2 Medium)": {
+   "uid": "fusion-gpt-6-astra-medium-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra Medium Thinking Fast + SWE-2 Medium)": {
+   "uid": "fusion-gpt-6-astra-medium-fast-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 20.0,
+   "cached": 2.0,
+   "out": 100.0
+  },
+  "Fusion (Claude Opus 5 XHigh + SWE-2 Medium)": {
+   "uid": "fusion-claude-opus-5-xhigh-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Fusion (Claude Opus 5 XHigh Fast + SWE-2 Medium)": {
+   "uid": "fusion-claude-opus-5-xhigh-fast-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (Claude Fable 5.1 XHigh + SWE-2 Medium)": {
+   "uid": "fusion-claude-fable-5-1-xhigh-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 0.25,
+   "out": 50.0
+  },
+  "Fusion (GPT-5.6 Sol XHigh Thinking + SWE-2 Medium)": {
+   "uid": "fusion-gpt-5-6-sol-xhigh-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 1.2,
+   "cached": 0.12,
+   "out": 6.0
+  },
+  "Fusion (GPT-5.6 Sol XHigh Thinking Fast + SWE-2 Medium)": {
+   "uid": "fusion-gpt-5-6-sol-xhigh-fast-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 8.0,
+   "cached": 0.8,
+   "out": 40.0
+  },
+  "Fusion (GPT-6 Astra XHigh Thinking + SWE-2 Medium)": {
+   "uid": "fusion-gpt-6-astra-xhigh-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra XHigh Thinking Fast + SWE-2 Medium)": {
+   "uid": "fusion-gpt-6-astra-xhigh-fast-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 20.0,
+   "cached": 2.0,
+   "out": 100.0
+  },
+  "Fusion (GPT-5.6 Sol Low Thinking + SWE-2 Medium)": {
+   "uid": "fusion-gpt-5-6-sol-low-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 1.2,
+   "cached": 0.12,
+   "out": 6.0
+  },
+  "Fusion (GPT-5.6 Sol Low Thinking Fast + SWE-2 Medium)": {
+   "uid": "fusion-gpt-5-6-sol-low-fast-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 8.0,
+   "cached": 0.8,
+   "out": 40.0
+  },
+  "Fusion (Claude Opus 5 Low + SWE-2 Medium)": {
+   "uid": "fusion-claude-opus-5-low-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Fusion (Claude Opus 5 Low Fast + SWE-2 Medium)": {
+   "uid": "fusion-claude-opus-5-low-fast-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (Claude Fable 5.1 Low + SWE-2 Medium)": {
+   "uid": "fusion-claude-fable-5-1-low-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 0.25,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra Low Thinking + SWE-2 Medium)": {
+   "uid": "fusion-gpt-6-astra-low-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra Low Thinking Fast + SWE-2 Medium)": {
+   "uid": "fusion-gpt-6-astra-low-fast-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 20.0,
+   "cached": 2.0,
+   "out": 100.0
+  },
+  "Fusion (Claude Fable 5.1 Max + SWE-2 Medium)": {
+   "uid": "fusion-claude-fable-5-1-max-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 0.25,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra Max Thinking + SWE-2 Medium)": {
+   "uid": "fusion-gpt-6-astra-max-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra Max Thinking Fast + SWE-2 Medium)": {
+   "uid": "fusion-gpt-6-astra-max-fast-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 20.0,
+   "cached": 2.0,
+   "out": 100.0
+  },
+  "Fusion (GPT-5.6 Sol Max Thinking + SWE-2 Medium)": {
+   "uid": "fusion-gpt-5-6-sol-max-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 1.2,
+   "cached": 0.12,
+   "out": 6.0
+  },
+  "Fusion (GPT-5.6 Sol Max Thinking Fast + SWE-2 Medium)": {
+   "uid": "fusion-gpt-5-6-sol-max-fast-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 8.0,
+   "cached": 0.8,
+   "out": 40.0
+  },
+  "Fusion (Claude Opus 5 Max + SWE-2 Medium)": {
+   "uid": "fusion-claude-opus-5-max-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Fusion (Claude Opus 5 Max Fast + SWE-2 Medium)": {
+   "uid": "fusion-claude-opus-5-max-fast-sidekick-swe-2-medium",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (Claude Fable 5.1 Medium + SWE-2 High)": {
+   "uid": "fusion-claude-fable-5-1-medium-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 0.25,
+   "out": 50.0
+  },
+  "Fusion (Claude Fable 5.1 High + SWE-2 High)": {
+   "uid": "fusion-claude-fable-5-1-high-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 0.25,
+   "out": 50.0
+  },
+  "Fusion (GPT-5.6 Sol High Thinking + SWE-2 High)": {
+   "uid": "fusion-gpt-5-6-sol-high-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 1.2,
+   "cached": 0.12,
+   "out": 6.0
+  },
+  "Fusion (GPT-5.6 Sol High Thinking Fast + SWE-2 High)": {
+   "uid": "fusion-gpt-5-6-sol-high-fast-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 8.0,
+   "cached": 0.8,
+   "out": 40.0
+  },
+  "Fusion (Claude Opus 5 High + SWE-2 High)": {
+   "uid": "fusion-claude-opus-5-high-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Fusion (Claude Opus 5 High Fast + SWE-2 High)": {
+   "uid": "fusion-claude-opus-5-high-fast-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra High Thinking + SWE-2 High)": {
+   "uid": "fusion-gpt-6-astra-high-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra High Thinking Fast + SWE-2 High)": {
+   "uid": "fusion-gpt-6-astra-high-fast-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 20.0,
+   "cached": 2.0,
+   "out": 100.0
+  },
+  "Fusion (GPT-5.6 Sol Medium Thinking + SWE-2 High)": {
+   "uid": "fusion-gpt-5-6-sol-medium-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 1.2,
+   "cached": 0.12,
+   "out": 6.0
+  },
+  "Fusion (GPT-5.6 Sol Medium Thinking Fast + SWE-2 High)": {
+   "uid": "fusion-gpt-5-6-sol-medium-fast-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 8.0,
+   "cached": 0.8,
+   "out": 40.0
+  },
+  "Fusion (Claude Opus 5 Medium + SWE-2 High)": {
+   "uid": "fusion-claude-opus-5-medium-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Fusion (Claude Opus 5 Medium Fast + SWE-2 High)": {
+   "uid": "fusion-claude-opus-5-medium-fast-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra Medium Thinking + SWE-2 High)": {
+   "uid": "fusion-gpt-6-astra-medium-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra Medium Thinking Fast + SWE-2 High)": {
+   "uid": "fusion-gpt-6-astra-medium-fast-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 20.0,
+   "cached": 2.0,
+   "out": 100.0
+  },
+  "Fusion (Claude Opus 5 XHigh + SWE-2 High)": {
+   "uid": "fusion-claude-opus-5-xhigh-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Fusion (Claude Opus 5 XHigh Fast + SWE-2 High)": {
+   "uid": "fusion-claude-opus-5-xhigh-fast-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (Claude Fable 5.1 XHigh + SWE-2 High)": {
+   "uid": "fusion-claude-fable-5-1-xhigh-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 0.25,
+   "out": 50.0
+  },
+  "Fusion (GPT-5.6 Sol XHigh Thinking + SWE-2 High)": {
+   "uid": "fusion-gpt-5-6-sol-xhigh-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 1.2,
+   "cached": 0.12,
+   "out": 6.0
+  },
+  "Fusion (GPT-5.6 Sol XHigh Thinking Fast + SWE-2 High)": {
+   "uid": "fusion-gpt-5-6-sol-xhigh-fast-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 8.0,
+   "cached": 0.8,
+   "out": 40.0
+  },
+  "Fusion (GPT-6 Astra XHigh Thinking + SWE-2 High)": {
+   "uid": "fusion-gpt-6-astra-xhigh-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra XHigh Thinking Fast + SWE-2 High)": {
+   "uid": "fusion-gpt-6-astra-xhigh-fast-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 20.0,
+   "cached": 2.0,
+   "out": 100.0
+  },
+  "Fusion (GPT-5.6 Sol Low Thinking + SWE-2 High)": {
+   "uid": "fusion-gpt-5-6-sol-low-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 1.2,
+   "cached": 0.12,
+   "out": 6.0
+  },
+  "Fusion (GPT-5.6 Sol Low Thinking Fast + SWE-2 High)": {
+   "uid": "fusion-gpt-5-6-sol-low-fast-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 8.0,
+   "cached": 0.8,
+   "out": 40.0
+  },
+  "Fusion (Claude Opus 5 Low + SWE-2 High)": {
+   "uid": "fusion-claude-opus-5-low-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Fusion (Claude Opus 5 Low Fast + SWE-2 High)": {
+   "uid": "fusion-claude-opus-5-low-fast-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (Claude Fable 5.1 Low + SWE-2 High)": {
+   "uid": "fusion-claude-fable-5-1-low-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 0.25,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra Low Thinking + SWE-2 High)": {
+   "uid": "fusion-gpt-6-astra-low-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra Low Thinking Fast + SWE-2 High)": {
+   "uid": "fusion-gpt-6-astra-low-fast-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 20.0,
+   "cached": 2.0,
+   "out": 100.0
+  },
+  "Fusion (Claude Fable 5.1 Max + SWE-2 High)": {
+   "uid": "fusion-claude-fable-5-1-max-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 0.25,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra Max Thinking + SWE-2 High)": {
+   "uid": "fusion-gpt-6-astra-max-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Fusion (GPT-6 Astra Max Thinking Fast + SWE-2 High)": {
+   "uid": "fusion-gpt-6-astra-max-fast-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 20.0,
+   "cached": 2.0,
+   "out": 100.0
+  },
+  "Fusion (GPT-5.6 Sol Max Thinking + SWE-2 High)": {
+   "uid": "fusion-gpt-5-6-sol-max-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 1.2,
+   "cached": 0.12,
+   "out": 6.0
+  },
+  "Fusion (GPT-5.6 Sol Max Thinking Fast + SWE-2 High)": {
+   "uid": "fusion-gpt-5-6-sol-max-fast-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 8.0,
+   "cached": 0.8,
+   "out": 40.0
+  },
+  "Fusion (Claude Opus 5 Max + SWE-2 High)": {
+   "uid": "fusion-claude-opus-5-max-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Fusion (Claude Opus 5 Max Fast + SWE-2 High)": {
+   "uid": "fusion-claude-opus-5-max-fast-sidekick-swe-2-high",
+   "family": "fusion",
+   "in": 10.0,
+   "cached": 1.0,
+   "out": 50.0
+  },
+  "Claude Opus 4.6": {
+   "uid": "claude-opus-4-6",
+   "family": "claude-opus-4.6",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 4.6 Thinking": {
+   "uid": "claude-opus-4-6-thinking",
+   "family": "claude-opus-4.6",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 4.6 1M": {
+   "uid": "claude-opus-4-6-1m",
+   "family": "claude-opus-4.6",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 4.6 Thinking 1M": {
+   "uid": "claude-opus-4-6-thinking-1m",
+   "family": "claude-opus-4.6",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "GPT-5.4 No Thinking": {
+   "uid": "gpt-5-4-none",
+   "family": "gpt-5.4",
+   "in": 2.5,
+   "cached": 0.25,
+   "out": 15.0
+  },
+  "GPT-5.4 Low Thinking": {
+   "uid": "gpt-5-4-low",
+   "family": "gpt-5.4",
+   "in": 2.5,
+   "cached": 0.25,
+   "out": 15.0
+  },
+  "GPT-5.4 Medium Thinking": {
+   "uid": "gpt-5-4-medium",
+   "family": "gpt-5.4",
+   "in": 2.5,
+   "cached": 0.25,
+   "out": 15.0
+  },
+  "GPT-5.4 High Thinking": {
+   "uid": "gpt-5-4-high",
+   "family": "gpt-5.4",
+   "in": 2.5,
+   "cached": 0.25,
+   "out": 15.0
+  },
+  "GPT-5.4 XHigh Thinking": {
+   "uid": "gpt-5-4-xhigh",
+   "family": "gpt-5.4",
+   "in": 2.5,
+   "cached": 0.25,
+   "out": 15.0
+  },
+  "GPT-5.4 No Thinking Fast": {
+   "uid": "gpt-5-4-none-priority",
+   "family": "gpt-5.4",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 30.0
+  },
+  "GPT-5.4 Low Thinking Fast": {
+   "uid": "gpt-5-4-low-priority",
+   "family": "gpt-5.4",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 30.0
+  },
+  "GPT-5.4 Medium Thinking Fast": {
+   "uid": "gpt-5-4-medium-priority",
+   "family": "gpt-5.4",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 30.0
+  },
+  "GPT-5.4 High Thinking Fast": {
+   "uid": "gpt-5-4-high-priority",
+   "family": "gpt-5.4",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 30.0
+  },
+  "GPT-5.4 XHigh Thinking Fast": {
+   "uid": "gpt-5-4-xhigh-priority",
+   "family": "gpt-5.4",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 30.0
+  },
+  "GPT-5.5 No Thinking": {
+   "uid": "gpt-5-5-none",
+   "family": "gpt-5.5",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 30.0
+  },
+  "GPT-5.5 Low Thinking": {
+   "uid": "gpt-5-5-low",
+   "family": "gpt-5.5",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 30.0
+  },
+  "GPT-5.5 Medium Thinking": {
+   "uid": "gpt-5-5-medium",
+   "family": "gpt-5.5",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 30.0
+  },
+  "GPT-5.5 High Thinking": {
+   "uid": "gpt-5-5-high",
+   "family": "gpt-5.5",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 30.0
+  },
+  "GPT-5.5 XHigh Thinking": {
+   "uid": "gpt-5-5-xhigh",
+   "family": "gpt-5.5",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 30.0
+  },
+  "GPT-5.5 No Thinking Fast": {
+   "uid": "gpt-5-5-none-priority",
+   "family": "gpt-5.5",
+   "in": 12.5,
+   "cached": 1.25,
+   "out": 75.0
+  },
+  "GPT-5.5 Low Thinking Fast": {
+   "uid": "gpt-5-5-low-priority",
+   "family": "gpt-5.5",
+   "in": 12.5,
+   "cached": 1.25,
+   "out": 75.0
+  },
+  "GPT-5.5 Medium Thinking Fast": {
+   "uid": "gpt-5-5-medium-priority",
+   "family": "gpt-5.5",
+   "in": 12.5,
+   "cached": 1.25,
+   "out": 75.0
+  },
+  "GPT-5.5 High Thinking Fast": {
+   "uid": "gpt-5-5-high-priority",
+   "family": "gpt-5.5",
+   "in": 12.5,
+   "cached": 1.25,
+   "out": 75.0
+  },
+  "GPT-5.5 XHigh Thinking Fast": {
+   "uid": "gpt-5-5-xhigh-priority",
+   "family": "gpt-5.5",
+   "in": 12.5,
+   "cached": 1.25,
+   "out": 75.0
+  },
+  "GPT-5.4 Mini Low Thinking": {
+   "uid": "gpt-5-4-mini-low",
+   "family": "gpt-5.4-mini",
+   "in": 0.75,
+   "cached": 0.08,
+   "out": 4.5
+  },
+  "GPT-5.4 Mini Medium Thinking": {
+   "uid": "gpt-5-4-mini-medium",
+   "family": "gpt-5.4-mini",
+   "in": 0.75,
+   "cached": 0.08,
+   "out": 4.5
+  },
+  "GPT-5.4 Mini High Thinking": {
+   "uid": "gpt-5-4-mini-high",
+   "family": "gpt-5.4-mini",
+   "in": 0.75,
+   "cached": 0.08,
+   "out": 4.5
+  },
+  "GPT-5.4 Mini XHigh Thinking": {
+   "uid": "gpt-5-4-mini-xhigh",
+   "family": "gpt-5.4-mini",
+   "in": 0.75,
+   "cached": 0.08,
+   "out": 4.5
+  },
+  "Claude Sonnet 4.6": {
+   "uid": "claude-sonnet-4-6",
+   "family": "claude-sonnet-4.6",
+   "in": 3.0,
+   "cached": 0.3,
+   "out": 15.0
+  },
+  "Claude Sonnet 4.6 Thinking": {
+   "uid": "claude-sonnet-4-6-thinking",
+   "family": "claude-sonnet-4.6",
+   "in": 3.0,
+   "cached": 0.3,
+   "out": 15.0
+  },
+  "Claude Sonnet 4.6 1M": {
+   "uid": "claude-sonnet-4-6-1m",
+   "family": "claude-sonnet-4.6",
+   "in": 3.0,
+   "cached": 0.3,
+   "out": 15.0
+  },
+  "Claude Sonnet 4.6 Thinking 1M": {
+   "uid": "claude-sonnet-4-6-thinking-1m",
+   "family": "claude-sonnet-4.6",
+   "in": 3.0,
+   "cached": 0.3,
+   "out": 15.0
+  },
+  "GPT-5.2 Low Thinking": {
+   "uid": "MODEL_GPT_5_2_LOW",
+   "family": "gpt-5.2",
+   "in": 1.75,
+   "cached": 0.17,
+   "out": 14.0
+  },
+  "GPT-5.2 Medium Thinking": {
+   "uid": "MODEL_GPT_5_2_MEDIUM",
+   "family": "gpt-5.2",
+   "in": 1.75,
+   "cached": 0.17,
+   "out": 14.0
+  },
+  "GPT-5.2 No Thinking": {
+   "uid": "MODEL_GPT_5_2_NONE",
+   "family": "gpt-5.2",
+   "in": 1.75,
+   "cached": 0.17,
+   "out": 14.0
+  },
+  "GPT-5.2 High Thinking": {
+   "uid": "MODEL_GPT_5_2_HIGH",
+   "family": "gpt-5.2",
+   "in": 1.75,
+   "cached": 0.17,
+   "out": 14.0
+  },
+  "GPT-5.2 XHigh Thinking": {
+   "uid": "MODEL_GPT_5_2_XHIGH",
+   "family": "gpt-5.2",
+   "in": 1.75,
+   "cached": 0.17,
+   "out": 14.0
+  },
+  "Claude Opus 4.5": {
+   "uid": "MODEL_CLAUDE_4_5_OPUS",
+   "family": "claude-opus-4.5",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Opus 4.5 Thinking": {
+   "uid": "MODEL_CLAUDE_4_5_OPUS_THINKING",
+   "family": "claude-opus-4.5",
+   "in": 5.0,
+   "cached": 0.5,
+   "out": 25.0
+  },
+  "Claude Haiku 4.5": {
+   "uid": "MODEL_PRIVATE_11",
+   "family": "claude-haiku-4.5",
+   "in": 1.0,
+   "cached": 0.1,
+   "out": 5.0
+  },
+  "Claude Sonnet 4.5": {
+   "uid": "MODEL_PRIVATE_2",
+   "family": "claude-sonnet-4.5",
+   "in": 3.0,
+   "cached": 0.3,
+   "out": 15.0
+  },
+  "Claude Sonnet 4.5 Thinking": {
+   "uid": "MODEL_PRIVATE_3",
+   "family": "claude-sonnet-4.5",
+   "in": 3.0,
+   "cached": 0.3,
+   "out": 15.0
+  },
+  "GPT-4.1": {
+   "uid": "MODEL_CHAT_GPT_4_1_2025_04_14",
+   "family": "gpt-4.1",
+   "in": 2.0,
+   "cached": 0.5,
+   "out": 8.0
+  },
+  "GPT-5.1 No Thinking": {
+   "uid": "MODEL_PRIVATE_12",
+   "family": "gpt-5.1",
+   "in": 1.25,
+   "cached": 0.12,
+   "out": 10.0
+  },
+  "GPT-5.1 Low Thinking": {
+   "uid": "MODEL_PRIVATE_13",
+   "family": "gpt-5.1",
+   "in": 1.25,
+   "cached": 0.12,
+   "out": 10.0
+  },
+  "GPT-5.1 Medium Thinking": {
+   "uid": "MODEL_PRIVATE_14",
+   "family": "gpt-5.1",
+   "in": 1.25,
+   "cached": 0.12,
+   "out": 10.0
+  },
+  "GPT-5.1 High Thinking": {
+   "uid": "MODEL_PRIVATE_15",
+   "family": "gpt-5.1",
+   "in": 1.25,
+   "cached": 0.12,
+   "out": 10.0
+  },
+  "GPT-5.3-Codex Low": {
+   "uid": "gpt-5-3-codex-low",
+   "family": "gpt-5.3-codex",
+   "in": 1.75,
+   "cached": 0.17,
+   "out": 14.0
+  },
+  "GPT-5.3-Codex Medium": {
+   "uid": "gpt-5-3-codex-medium",
+   "family": "gpt-5.3-codex",
+   "in": 1.75,
+   "cached": 0.17,
+   "out": 14.0
+  },
+  "GPT-5.3-Codex High": {
+   "uid": "gpt-5-3-codex-high",
+   "family": "gpt-5.3-codex",
+   "in": 1.75,
+   "cached": 0.17,
+   "out": 14.0
+  },
+  "GPT-5.3-Codex X-High": {
+   "uid": "gpt-5-3-codex-xhigh",
+   "family": "gpt-5.3-codex",
+   "in": 1.75,
+   "cached": 0.17,
+   "out": 14.0
+  },
+  "GPT-5.3-Codex Low Fast": {
+   "uid": "gpt-5-3-codex-low-priority",
+   "family": "gpt-5.3-codex",
+   "in": 3.5,
+   "cached": 0.35,
+   "out": 28.0
+  },
+  "GPT-5.3-Codex Medium Fast": {
+   "uid": "gpt-5-3-codex-medium-priority",
+   "family": "gpt-5.3-codex",
+   "in": 3.5,
+   "cached": 0.35,
+   "out": 28.0
+  },
+  "GPT-5.3-Codex High Fast": {
+   "uid": "gpt-5-3-codex-high-priority",
+   "family": "gpt-5.3-codex",
+   "in": 3.5,
+   "cached": 0.35,
+   "out": 28.0
+  },
+  "GPT-5.3-Codex XHigh Fast": {
+   "uid": "gpt-5-3-codex-xhigh-priority",
+   "family": "gpt-5.3-codex",
+   "in": 3.5,
+   "cached": 0.35,
+   "out": 28.0
+  },
+  "Kimi K2.6": {
+   "uid": "kimi-k2-6",
+   "family": "kimi-k2.6",
+   "in": 0.95,
+   "cached": 0.16,
+   "out": 4.0
+  },
+  "Kimi K2.7": {
+   "uid": "kimi-k2-7",
+   "family": "kimi-k2.7",
+   "in": 0.95,
+   "cached": 0.19,
+   "out": 4.0
+  },
+  "Nemotron 3 Ultra None": {
+   "uid": "nemotron-3-ultra-none",
+   "family": "nemotron-3-ultra",
+   "in": 0.6,
+   "cached": 0.12,
+   "out": 2.4
+  },
+  "Nemotron 3 Ultra Medium": {
+   "uid": "nemotron-3-ultra-medium",
+   "family": "nemotron-3-ultra",
+   "in": 0.6,
+   "cached": 0.12,
+   "out": 2.4
+  },
+  "Nemotron 3 Ultra High": {
+   "uid": "nemotron-3-ultra-high",
+   "family": "nemotron-3-ultra",
+   "in": 0.6,
+   "cached": 0.12,
+   "out": 2.4
+  },
+  "SWE-1.6": {
+   "uid": "swe-1-6",
+   "family": "swe-1.6",
+   "in": 0.5,
+   "cached": 0.2,
+   "out": 2.5
+  },
+  "SWE-1.6 Fast": {
+   "uid": "swe-1-6-fast",
+   "family": "swe-1.6-fast",
+   "in": 0.5,
+   "cached": 0.2,
+   "out": 2.5
+  },
+  "Gemini 3.1 Pro Low Thinking": {
+   "uid": "gemini-3-1-pro-low",
+   "family": "gemini-3.1-pro",
+   "in": 2.0,
+   "cached": 0.2,
+   "out": 12.0
+  },
+  "Gemini 3.1 Pro High Thinking": {
+   "uid": "gemini-3-1-pro-high",
+   "family": "gemini-3.1-pro",
+   "in": 2.0,
+   "cached": 0.2,
+   "out": 12.0
+  },
+  "Gemini 3 Flash Minimal": {
+   "uid": "MODEL_GOOGLE_GEMINI_3_0_FLASH_MINIMAL",
+   "family": "gemini-3-flash",
+   "in": 0.5,
+   "cached": 0.05,
+   "out": 3.0
+  },
+  "Gemini 3 Flash Low": {
+   "uid": "MODEL_GOOGLE_GEMINI_3_0_FLASH_LOW",
+   "family": "gemini-3-flash",
+   "in": 0.5,
+   "cached": 0.05,
+   "out": 3.0
+  },
+  "Gemini 3 Flash Medium": {
+   "uid": "MODEL_GOOGLE_GEMINI_3_0_FLASH_MEDIUM",
+   "family": "gemini-3-flash",
+   "in": 0.5,
+   "cached": 0.05,
+   "out": 3.0
+  },
+  "Gemini 3 Flash High": {
+   "uid": "MODEL_GOOGLE_GEMINI_3_0_FLASH_HIGH",
+   "family": "gemini-3-flash",
+   "in": 0.5,
+   "cached": 0.05,
+   "out": 3.0
+  },
+  "DeepSeek V4 Pro High": {
+   "uid": "deepseek-v4-pro-high",
+   "family": "deepseek-v4-pro",
+   "in": 1.32,
+   "cached": 0.04,
+   "out": 3.96
+  },
+  "DeepSeek V4 Pro Max": {
+   "uid": "deepseek-v4-pro-max",
+   "family": "deepseek-v4-pro",
+   "in": 1.32,
+   "cached": 0.04,
+   "out": 3.96
+  }
+ },
+ "families": {
+  "claude-opus-5": "Claude Opus 5",
+  "claude-fable-5.1": "Claude Fable 5.1",
+  "claude-sonnet-5": "Claude Sonnet 5",
+  "gemini-3.8-flash": "Gemini 3.8 Flash",
+  "gpt-5.6-sol": "GPT-5.6 Sol",
+  "gpt-5.6-luna": "GPT-5.6 Luna",
+  "gpt-6-astra": "GPT-6 Astra",
+  "glm-5.2": "GLM-5.2",
+  "kimi-k3": "Kimi K3",
+  "glm-5.3": "GLM-5.3",
+  "swe-1.7-lightning": "SWE-1.7 Lightning",
+  "swe-2": "SWE-2",
+  "adaptive": "Adaptive",
+  "claude-opus-4.7": "Claude Opus 4.7",
+  "claude-opus-4.8": "Claude Opus 4.8",
+  "claude-fable-5": "Claude Fable 5",
+  "gemini-3.5-flash": "Gemini 3.5 Flash",
+  "gemini-3.6-flash": "Gemini 3.6 Flash",
+  "gemini-3.7-flash": "Gemini 3.7 Flash",
+  "gpt-5.6-terra": "GPT-5.6 Terra",
+  "grok-4.5": "Grok 4.5",
+  "grok-4.6": "Grok 4.6",
+  "inkling": "Inkling",
+  "glm-5.3-flash": "GLM-5.3 Flash",
+  "deepseek-v4-flash": "DeepSeek V4 Flash",
+  "deepseek-v4.1-flash": "DeepSeek V4.1 Flash",
+  "swe-1.7": "SWE-1.7",
+  "fusion": "Fusion",
+  "claude-opus-4.6": "Claude Opus 4.6",
+  "gpt-5.4": "GPT-5.4",
+  "gpt-5.5": "GPT-5.5",
+  "gpt-5.4-mini": "GPT-5.4 Mini",
+  "claude-sonnet-4.6": "Claude Sonnet 4.6",
+  "gpt-5.2": "GPT-5.2",
+  "claude-opus-4.5": "Claude Opus 4.5",
+  "claude-haiku-4.5": "Claude Haiku 4.5",
+  "claude-sonnet-4.5": "Claude Sonnet 4.5",
+  "gpt-4.1": "GPT-4.1",
+  "gpt-5.1": "GPT-5.1",
+  "gpt-5.3-codex": "GPT-5.3-Codex",
+  "kimi-k2.6": "Kimi K2.6",
+  "kimi-k2.7": "Kimi K2.7",
+  "nemotron-3-ultra": "Nemotron 3 Ultra",
+  "swe-1.6": "SWE-1.6",
+  "swe-1.6-fast": "SWE-1.6 Fast",
+  "gemini-3.1-pro": "Gemini 3.1 Pro",
+  "gemini-3-flash": "Gemini 3 Flash",
+  "deepseek-v4-pro": "DeepSeek V4 Pro"
+ },
+ "fetched": 1789818470.3038645
+}

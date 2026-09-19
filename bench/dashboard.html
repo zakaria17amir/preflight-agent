@@ -13,6 +13,13 @@
   header .sub { color:var(--dim); }
   header .live { margin-left:auto; color:var(--dim); font-variant-numeric:tabular-nums; }
   header .live b { color:var(--haiku); }
+  header .repo { color:var(--dim); text-decoration:none; font-size:13px; border:1px solid var(--line); border-radius:6px; padding:2px 8px; }
+  header .repo:hover { color:var(--fg); }
+  .banner { margin:12px 28px 0; padding:10px 14px; border:1px solid #3a3320; background:#1d1a12; color:#ffd166; border-radius:8px; font-size:13px; }
+  .banner code { color:var(--fg); }
+  #transcript pre { background:#0b0d11; border:1px solid var(--line); border-radius:8px; padding:10px 12px; max-height:520px; overflow:auto; font-size:12px; line-height:1.4; white-space:pre-wrap; }
+  #transcript .hl-pf { color:var(--dim); } #transcript .hl-pass { color:var(--haiku); font-weight:600; } #transcript .hl-fail { color:var(--fail); font-weight:600; }
+  #transcript .hl-esc { color:var(--handoff); font-weight:600; } #transcript .hl-add { color:var(--haiku); } #transcript .hl-del { color:var(--fail); }
   main { padding:16px 28px 40px; display:grid; gap:16px; grid-template-columns:repeat(12,1fr); }
   .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
   .panel h2 { margin:0 0 10px; font-size:13px; text-transform:uppercase; letter-spacing:.8px; color:var(--dim); }
@@ -54,8 +61,10 @@
 <header>
   <h1>preflight</h1>
   <span class="sub">brief the agent · size the job · start cheap — results dashboard</span>
+  <a class="repo" href="https://github.com/zakaria17amir/preflight-agent" target="_blank" rel="noopener">github ↗</a>
   <span class="live">● <b id="status">connecting</b> <span id="updated"></span></span>
 </header>
+<div class="banner" id="banner" style="display:none"></div>
 <main>
   <section class="kpis" id="kpis"></section>
 
@@ -98,8 +107,13 @@
   <section class="panel" id="detail"></section>
 
   <section class="panel c12">
-    <h2>Live cascade runs <span class="muted">(from <code>python -m preflight cascade</code>, newest first)</span></h2>
+    <h2 id="liveTitle">Live cascade runs <span class="muted">(from <code>python -m preflight cascade</code>, newest first)</span></h2>
     <table id="liveRuns"></table>
+  </section>
+
+  <section class="panel c12" id="transcript">
+    <h2>What a run looks like <span class="muted">— recorded terminal output of one cascade: brief → cheap tier fails → handoff → strong tier passes</span></h2>
+    <pre id="transcriptBody" class="muted">loading…</pre>
   </section>
 </main>
 
@@ -127,7 +141,8 @@ const tierOf = m => { m = (m||'').toLowerCase(); if (/haiku/.test(m)) return 'ha
 const stageKind = s => s.name.startsWith('brief') ? 'brief' : s.name.startsWith('handoff') ? 'handoff' : tierOf(s.model);
 const color = k => ({brief:'var(--brief)',handoff:'var(--handoff)',haiku:'var(--haiku)',sonnet:'var(--sonnet)',opus:'var(--opus)',gpt:'#5fd4e6',glm:'#ff8bd1',swe:'#c9f26b',gemini:'#ffd166',deepseek:'#9b8cff',kimi:'#f4a261'}[k] || '#666');
 
-let RESULTS = {}, LIVE = [], selected = null;
+let RESULTS = {}, LIVE = [], selected = null, BUILD = null, transcriptLoaded = false;
+const STATIC = /github\.io$/.test(location.hostname) || location.protocol === 'file:';
 
 async function load() {
   try {
@@ -136,8 +151,19 @@ async function load() {
       fetch('results/live.json?t=' + Date.now()).then(x => x.ok ? x.json() : []).catch(() => []),
     ]);
     RESULTS = r; LIVE = Array.isArray(l) ? l : [];
-    $('#status').textContent = 'live'; $('#updated').textContent = 'updated ' + new Date().toLocaleTimeString();
+    if (STATIC) {
+      BUILD = BUILD || await fetch('results/meta.json').then(x => x.ok ? x.json() : null).catch(() => null);
+      const latest = LIVE.length ? LIVE[LIVE.length-1].when : '';
+      $('#status').textContent = 'snapshot'; $('#status').style.color = 'var(--handoff)';
+      $('#updated').textContent = (BUILD ? `built ${BUILD.built} @ ${BUILD.commit}` : '') + (latest ? ` · last recorded run ${latest}` : '');
+      $('#banner').style.display = 'block';
+      $('#banner').innerHTML = 'This is a <b>static snapshot</b> of the results committed to the repo. Agent runs need a machine with the <code>claude</code> / <code>devin</code> CLI logged in, so nothing runs here. To run it live: <code>git clone</code> the repo, then <code>python bench/dashboard.py</code> and <code>python -m preflight demo</code>.';
+      $('#liveTitle').innerHTML = 'Recorded cascade runs <span class="muted">(from <code>python -m preflight cascade</code>, newest first)</span>';
+    } else {
+      $('#status').textContent = 'live'; $('#updated').textContent = 'updated ' + new Date().toLocaleTimeString();
+    }
     render();
+    if (!transcriptLoaded) loadTranscript();
   } catch (e) { $('#status').textContent = 'no data'; console.error(e); }
 }
 
@@ -279,7 +305,25 @@ function renderLive() {
     [...LIVE].reverse().slice(0, 25).map(r => `<tr><td>${esc(r.when)}</td><td><span class="tag ${engineOf(r)==='devin'?'devin':''}">${engineOf(r)}</span></td><td>${esc(r.repo)}</td><td title="${esc(r.issue)}">${esc((r.issue||'').slice(0,60))}${(r.issue||'').length>60?'…':''}</td><td>${esc((r.tiers||[]).join(' → '))}</td><td>${r.cheap_max_turns??'—'}</td><td><span class="cell ${r.passed?'pass':'fail'}">${r.passed?'PASS':'FAIL'} <span class="tier">${tierOf(r.final_tier)}</span></span></td><td class="num">${fmt$(r.cost)}${engineOf(r)==='devin'?'<span class="est">est</span>':''}</td><td style="min-width:160px">${stageBar(r.stages||[])}</td></tr>`).join('');
 }
 
-load(); setInterval(load, 4000);
+async function loadTranscript() {
+  transcriptLoaded = true;
+  const txt = await fetch('results/demo_transcript.txt?t=' + Date.now()).then(x => x.ok ? x.text() : '').catch(() => '');
+  const el = $('#transcriptBody');
+  if (!txt.trim()) { el.textContent = 'No recorded transcript yet. Run a cascade with stderr redirected to bench/results/demo_transcript.txt.'; return; }
+  el.classList.remove('muted');
+  el.innerHTML = txt.split(/\r?\n/).map(l => {
+    const e = esc(l);
+    if (/tests PASS|solved at tier|PASS/.test(l)) return `<span class="hl-pass">${e}</span>`;
+    if (/tests FAIL|FAIL/.test(l)) return `<span class="hl-fail">${e}</span>`;
+    if (/escalating|handoff:/.test(l)) return `<span class="hl-esc">${e}</span>`;
+    if (/^\s*\[preflight/.test(l)) return `<span class="hl-pf">${e}</span>`;
+    if (/^\s*\+[^+]/.test(l)) return `<span class="hl-add">${e}</span>`;
+    if (/^\s*-[^-]/.test(l) && !/^\s*- \*\*/.test(l)) return `<span class="hl-del">${e}</span>`;
+    return e;
+  }).join(String.fromCharCode(10));
+}
+
+load(); if (!STATIC) setInterval(load, 4000);
 </script>
 </body>
 </html>

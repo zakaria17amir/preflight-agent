@@ -1,0 +1,32 @@
+{
+ "passed": true,
+ "cost": 0.01597716,
+ "tokens": 153294,
+ "turns": 8,
+ "seconds": 41.83432897758484,
+ "stages": [
+  {
+   "name": "brief",
+   "model": "Claude Haiku 4.5",
+   "cost": 0.0093337,
+   "tokens": 15950
+  },
+  {
+   "name": "attempt1",
+   "model": "gpt-5.6-luna",
+   "cost": 0.00664346,
+   "tokens": 137344,
+   "passed": true
+  }
+ ],
+ "tests": "21 passed in 0.04s",
+ "summary": "Files changed: `calcx/report.py` \u2014 fixed error-prefix matching from `Error:` to `error:`.\nRoot cause: batch errors are formatted with lowercase `error:`, so they were counted as successful.\nTest status: `21 passed` via `py -3.14 -m pytest -q`.",
+ "brief": "<!-- preflight brief | model=Claude Haiku 4.5 | cost=$0.0093 | tokens=15950 | size=S tier=cheap | heuristic_size=M -->\n# Brief\n\nI'll analyze the repo and write a delegation brief based on the provided information.\n\n## Start here\n1. **calcx/report.py** \u2014 Contains the `calc()` and `evaluate_batch()` functions that generate the summary line; this is where the bug likely manifests.\n2. **tests/test_calcx.py** \u2014 Has test coverage including `test_convert_linear()`; need to verify if error cases are tested in the summary.\n3. **calcx/evaluator.py** \u2014 Evaluates expressions and likely returns error states that should be counted differently.\n4. **calcx/parser.py** \u2014 Parses expressions; errors here may propagate as failed rows.\n5. **calcx/tokenizer.py** \u2014 Tokenizes input; errors here also propagate upstream.\n\n## Conventions\n- Python project with type hints (preserve them in all changes).\n- Tests live in `tests/` directory; use pytest.\n- Error handling should distinguish between successful evaluations and error states.\n- The summary line logic must count only successful evaluations as \"ok\", not errors.\n\n## Verify\nRun: `C:\\Python314\\python.exe -m pytest -q`\n\nThe fix is proven by: a test case in `tests/test_calcx.py` that calls `evaluate_batch()` with a mix of valid and invalid expressions, then asserts the summary line correctly reports only the valid ones as \"ok\" (e.g., `1/3 ok` when 2 expressions error).\n\n## Risks\n- The summary counting logic may be in `format_report()` or `evaluate_batch()` \u2014 don't assume it's in one place.\n- Error rows must still be displayed in the table; only the count should exclude them.\n- Don't break the `calc()` single-expression function; it may have different error handling than batch mode.\n\n## Size\n**S** \u2014 The bug is likely a single conditional or counter in the summary line generation, localized to one function in `calcx/report.py`.\n\n## Tier\n**cheap** \u2014 This is a straightforward counting logic fix with no cross-module design changes needed.\n",
+ "wall": 43.68230390548706,
+ "engine": "devin",
+ "tiers": [
+  "gpt-5.6-luna",
+  "sonnet"
+ ],
+ "cost_estimated": true
+}

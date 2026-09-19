@@ -1,0 +1,25 @@
+{
+ "passed": true,
+ "cost": 0.051863599999999996,
+ "tokens": 183930,
+ "turns": 8,
+ "seconds": 27.388004302978516,
+ "stages": [
+  {
+   "name": "attempt1",
+   "model": "sonnet",
+   "cost": 0.051863599999999996,
+   "tokens": 183930,
+   "passed": true
+  }
+ ],
+ "tests": "21 passed in 0.03s",
+ "summary": "The regex `\\d+\\.\\d*|\\d+` doesn't match a leading-dot number like `.5`. Fix by adding that alternative.All 21 tests pass.\n\n**Files changed:** `calcx/tokenizer.py`\n**Root cause:** The number regex only matched `\\d+\\.\\d*` or `\\d+`, missing the leading-dot form `\\.\\d+`, so `.5` had no matching token and hit the \"unexpected character\" error path.\n**Test status:** All 21 existing tests pass; manually verified `.5 * 2` and `2.` both tokenize correctly.",
+ "wall": 29.276795864105225,
+ "engine": "devin",
+ "tiers": [
+  "gpt-5.6-luna",
+  "sonnet"
+ ],
+ "cost_estimated": true
+}

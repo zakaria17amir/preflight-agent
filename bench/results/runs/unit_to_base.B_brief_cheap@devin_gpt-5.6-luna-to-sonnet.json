@@ -1,0 +1,32 @@
+{
+ "passed": true,
+ "cost": 0.01434144,
+ "tokens": 205246,
+ "turns": 9,
+ "seconds": 48.888736976623534,
+ "stages": [
+  {
+   "name": "brief",
+   "model": "Claude Haiku 4.5",
+   "cost": 0.0055972,
+   "tokens": 15974
+  },
+  {
+   "name": "attempt1",
+   "model": "gpt-5.6-luna",
+   "cost": 0.00874424,
+   "tokens": 189272,
+   "passed": true
+  }
+ ],
+ "tests": "21 passed in 0.03s",
+ "summary": "Files changed: `calcx/units.py`, `calcx/report.py`.\nRoot cause: conversions stopped at the base value; batch reporting caught `UnitError` as generic `ValueError`.\nTest status: `21 passed` via `python -m pytest -q`; verified reverse, mile, and bad-unit conversions.",
+ "brief": "<!-- preflight brief | model=Claude Haiku 4.5 | cost=$0.0056 | tokens=15974 | size=M tier=mid | heuristic_size=M -->\n# Brief\n\n## Start here\n\n1. **calcx/units.py** \u2014 Contains unit conversion logic; the bug is in how conversions are applied (only working to base unit).\n2. **tests/test_calcx.py** \u2014 Verify existing tests and add cases for `to(2500, m, km)` and `to(1, mi, km)` to confirm the fix.\n3. **calcx/evaluator.py** \u2014 Likely calls the conversion function; check how `to()` is evaluated and how errors are handled in batch contexts.\n4. **calcx/report.py** \u2014 Handles batch reporting; must preserve `UnitError` instead of wrapping it as generic \"cannot convert\" error.\n5. **calcx/__init__.py** \u2014 Entry point; check what's exported and how `calc()` is called.\n\n## Conventions\n\n- Python with type hints; maintain them in all changes.\n- Tests in `tests/test_calcx.py`; add test cases for the two failing conversions and the error-handling case.\n- Error handling: `UnitError` must propagate through batch rows without being caught and re-wrapped as a generic error message.\n- Run tests with `pytest -q`.\n\n## Verify\n\n```\nC:\\Python314\\python.exe -m pytest -q\n```\n\nTests should verify:\n- `to(2500, m, km)` returns `2.5`\n- `to(1, mi, km)` returns `1.60934` (or equivalent)\n- Batch report with bad unit raises/preserves `UnitError` (not generic \"cannot convert\")\n\n## Risks\n\n- Conversion logic may have asymmetry: check if it always converts *to* base unit then *from* base unit, or if it shortcuts when target is base.\n- Batch error handling may be catching all exceptions; ensure `UnitError` is re-raised or not caught in the first place.\n- Unit definitions (km, m, mi) must be consistent; verify they exist and have correct conversion factors.\n\n## Size\n\n**M** \u2014 The fix touches unit conversion logic (units.py) and error handling in the evaluator/report layer (2\u20133 files), plus test additions.\n\n## Tier\n\n**mid** \u2014 Straightforward logic bug in unit conversion, but requires careful tracing through evaluator and report layers to fix error handling correctly. No architectural changes needed.\n",
+ "wall": 50.71414661407471,
+ "engine": "devin",
+ "tiers": [
+  "gpt-5.6-luna",
+  "sonnet"
+ ],
+ "cost_estimated": true
+}

@@ -2,6 +2,9 @@
 
 **Brief the agent, size the job, start cheap.**
 
+**Live dashboard:** https://zakaria17amir.github.io/preflight-agent/ — every result below, per-model analytics, and
+a recorded cascade run. (Static snapshot of the committed results; agent runs happen on your machine, see *Live demo*.)
+
 A tech-lead pass that runs *before* a coding agent does: it orients the agent, sizes the task, tries the cheap
 model first, and escalates with a distilled post-mortem when that fails. Built in a 3-hour hackathon, with a
 measured experiment instead of a promise.
@@ -15,13 +18,18 @@ issue ──▶ scan (0 tokens) ──▶ brief (haiku, ~$0.01) ──▶ attemp
 
 ## TL;DR of the results
 
-| | pass | cost for 5 bugs | vs sonnet alone |
-|---|---|---|---|
-| Sonnet, cold | 5/5 | $0.62 | — |
-| **Haiku + brief** | 5/5 | **$0.42** | **−32%** |
-| Cascade, forced to escalate on 3/5 | 5/5 | $0.72 | **+16%** |
+| engine | | pass | cost for 5 bugs | vs sonnet alone |
+|---|---|---|---|---|
+| claude | Sonnet, cold | 5/5 | $0.62 | — |
+| claude | **Haiku + brief** | 5/5 | **$0.42** | **−32%** |
+| claude | Cascade, forced to escalate on 3/5 | 5/5 | $0.72 | **+16%** |
+| devin | Sonnet, cold | 5/5 | $0.25 est. | — |
+| devin | **GPT-5.6 Luna + brief** (brief written by haiku) | 5/5 | **$0.07 est.** | **−74%** |
 
 - A **$0.01 brief** let the cheap model match the expensive one at a third less cost.
+- The brief is **portable across vendors**: a Claude-written brief handed to a GPT agent through Devin CLI got
+  5/5 at a quarter of cold Sonnet's cost. Compare within an engine row only: Devin dollars are list-price
+  estimates and its Sonnet is a different model/harness than the Claude CLI's.
 - **Starting cheap can lose**, and did when the cheap tier was budget-capped: failed cheap attempts were empty,
   so the cascade paid twice and the handoff had nothing to carry.
 - The lesson is upstream of "handoff vs clean restart": **the escalation gate matters more than the handoff.**
@@ -121,7 +129,32 @@ issue written the way a human writes one: **symptoms only, no file names.**
 | leading_dot | M | PASS $0.169 | PASS $0.076 | PASS $0.076 (haiku) | PASS $0.073 (haiku) | PASS $0.132 (sonnet) | PASS $0.056 (haiku) |
 | unit_to_base | L | PASS $0.174 | PASS $0.117 | PASS $0.124 (haiku) | PASS $0.128 (haiku) | PASS $0.225 (sonnet) | PASS $0.212 (sonnet) |
 | **total** | | **5/5 pass, $0.623** | **5/5 pass, $0.421** | **5/5 pass, $0.380** | **5/5 pass, $0.415** | **5/5 pass, $0.721** | **5/5 pass, $0.431** |
+
+Other engines / tier pairs (devin $ are list-price estimates):
+
+| bug | size | A_cold_strong@devin_gpt-5.6-luna-to-sonnet | B_brief_cheap@devin_gpt-5.6-luna-to-sonnet | C_cascade@devin_gpt-5.6-luna-to-sonnet |
+|---|---|---|---|---|
+| report_counter | S | PASS $0.042 | PASS $0.016 | PASS $0.018 (gpt-5.6-luna) |
+| fahrenheit | S | PASS $0.043 | PASS $0.011 | PASS $0.018 (gpt-5.6-luna) |
+| power_assoc | M | PASS $0.045 | PASS $0.011 | PASS $0.018 (gpt-5.6-luna) |
+| leading_dot | M | PASS $0.052 | PASS $0.015 | PASS $0.012 (gpt-5.6-luna) |
+| unit_to_base | L | PASS $0.070 | PASS $0.014 | PASS $0.017 (gpt-5.6-luna) |
+| **total** | | **5/5 pass, $0.253** | **5/5 pass, $0.067** | **5/5 pass, $0.082** |
 <!-- /RESULTS_TABLE -->
+
+Other engines / tier pairs (devin $ are list-price estimates):
+
+| bug | size | A_cold_strong@devin_gpt-5.6-luna-to-sonnet | B_brief_cheap@devin_gpt-5.6-luna-to-sonnet | C_cascade@devin_gpt-5.6-luna-to-sonnet |
+|---|---|---|---|---|
+| report_counter | S | PASS $0.042 | PASS $0.016 | PASS $0.018 (gpt-5.6-luna) |
+| fahrenheit | S | PASS $0.043 | PASS $0.011 | PASS $0.018 (gpt-5.6-luna) |
+| power_assoc | M | PASS $0.045 | PASS $0.011 | PASS $0.018 (gpt-5.6-luna) |
+| leading_dot | M | PASS $0.052 | PASS $0.015 | PASS $0.012 (gpt-5.6-luna) |
+| unit_to_base | L | PASS $0.070 | PASS $0.014 | PASS $0.017 (gpt-5.6-luna) |
+| **total** | | **5/5 pass, $0.253** | **5/5 pass, $0.067** | **5/5 pass, $0.082** |
+<!-- /RESULTS_TABLE -->
+
+
 
 Costs include the brief and handoff calls. `(haiku)`/`(sonnet)` is the tier that produced the passing patch.
 Every run's brief, handoff, diff, test output and agent summary is in `bench/results/runs/<bug>.<arm>.json`.
@@ -137,7 +170,11 @@ Every run's brief, handoff, diff, test output and agent summary is in `bench/res
    4 times out of 5; the E–F gap is variance in *whether haiku finished*, not the handoff.
 4. **Handoff vs clean restart: one paired point.** Both E and F escalated on `unit_to_base`; both passed;
    $0.225 with handoff vs $0.212 without. No conclusion at n = 1.
-5. **A budget-cap failure is uninformative.** The `power_assoc` handoff correctly said "no code changes, diff
+5. **Cross-vendor, the brief still carries.** On Devin CLI, GPT-5.6 Luna ($0.20/1M in) with the haiku brief went
+   5/5 at $0.067 est. vs $0.253 est. for cold Sonnet, and never escalated. The orientation is not Claude-specific;
+   it is just a good delegation note. (Wider price gap than haiku→sonnet, so the "start cheap" saving is larger,
+   but the cheap tier *still* didn't fail, so the handoff remains untested here too.)
+6. **A budget-cap failure is uninformative.** The `power_assoc` handoff correctly said "no code changes, diff
    empty" and had nothing to distill. A handoff can only carry what the cheap attempt produced, so the gate
    decides whether the cheap attempt is an investment or a tax. (Darwin Cascade's gate is the mirror image:
    retry cheap on *empty* patch. Their data supports it.)
@@ -163,7 +200,8 @@ python bench/run_bench.py --arms D_cascade_nohandoff,E_capped_handoff,F_capped_n
 python bench/run_bench.py --redo --bugs power_assoc --arms C_cascade
 ```
 
-The table above is regenerated into this README on every run.
+The table above is regenerated into this README on every run. Pushing `bench/results/**` to `main` redeploys the
+dashboard to GitHub Pages (`.github/workflows/pages.yml`); the site is the committed results, nothing runs there.
 
 ## What we found while building it
 
