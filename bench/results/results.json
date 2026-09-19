@@ -1,31 +1,5 @@
 {
  "fahrenheit": {
-  "B_brief_cheap": {
-   "passed": true,
-   "cost": 0.0666398,
-   "tokens": 117160,
-   "turns": 5,
-   "seconds": 37.18780563545227,
-   "stages": [
-    {
-     "name": "brief",
-     "model": "claude-haiku-4-5-20251001",
-     "cost": 0.019122999999999998,
-     "tokens": 7801
-    },
-    {
-     "name": "attempt1",
-     "model": "haiku",
-     "cost": 0.0475168,
-     "tokens": 109359,
-     "passed": true
-    }
-   ],
-   "tests": "20 passed in 0.07s",
-   "summary": "**Files changed:** `calcx/units.py` line 20  \n**Root cause:** Fahrenheit's `from_base` conversion used the wrong ratio (5/9 instead of 9/5), inverting the Celsius-to-Fahrenheit multiplier. The `to_base` (F\u2192K) was correct; only the reverse direction was broken.  \n**Test status:** All 20 tests pass \u2713",
-   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0191 | tokens=7801 | size=S tier=cheap | heuristic_size=S -->\n# Brief\n\n## Start here\n\n1. **calcx/units.py** \u2014 temperature conversion formulas live here; C\u2192K works so the bug is in C\u2192F logic\n2. **tests/test_calcx.py** \u2014 verify test structure and find/add temperature conversion tests\n3. **calcx/evaluator.py** \u2014 see how units.py is called during expression evaluation\n\n## Conventions\n\n- Type hints required (Python 3.10+)\n- Tests in `tests/test_calcx.py` using pytest\n- Unit conversion likely uses a dict-based formula lookup or function registry\n\n## Verify\n\n```bash\npytest -q\n```\n\nPassing test: `calc(\"to(100, C, F)\")` should return 212 (or equivalent expression the codebase uses).\n\n## Risks\n\n- C\u2192K works, so offset-based conversions are not inherently broken; isolated to F formula\n- Don't touch the tokenizer/parser\u2014this is pure calculation\n- Temperature scales use both ratio (\u00d79/5) and offset (+32); confirm the order\n\n## Size\n\n**S** \u2014 Single-file fix in units.py; wrong constant or formula in the Celsius\u2192Fahrenheit conversion.\n\n## Tier\n\n**cheap** \u2014 Straightforward arithmetic bug in a conversion formula; no design changes needed.\n",
-   "wall": 41.42022371292114
-  },
   "A_cold_strong": {
    "passed": true,
    "cost": 0.1049162,
@@ -44,82 +18,863 @@
    "tests": "20 passed in 0.04s",
    "summary": "100 C now correctly converts to 212 F, and all 20 tests pass.\n\n- Files changed: `calcx/units.py`\n- Root cause: the Kelvin\u2192Fahrenheit formula used `* 5 / 9` instead of `* 9 / 5`\n- Test status: all 20 tests pass",
    "wall": 29.210981130599976
-  }
- },
- "report_counter": {
-  "A_cold_strong": {
-   "passed": true,
-   "cost": 0.08154639999999999,
-   "tokens": 161222,
-   "turns": 5,
-   "seconds": 15.338751077651978,
-   "stages": [
-    {
-     "name": "attempt1",
-     "model": "sonnet",
-     "cost": 0.08154639999999999,
-     "tokens": 161222,
-     "passed": true
-    }
-   ],
-   "tests": "20 passed in 0.04s",
-   "summary": "Files changed: calcx/report.py \u2014 root cause was a case mismatch: errors are formatted as `\"error: ...\"` (lowercase) but the ok-count check filtered on `\"Error:\"` (capital), so no row was ever excluded \u2014 test status: 20 passed.",
-   "wall": 17.351022005081177
   },
   "B_brief_cheap": {
    "passed": true,
-   "cost": 0.06518230000000001,
-   "tokens": 200534,
-   "turns": 8,
-   "seconds": 44.03709222793579,
+   "cost": 0.09117159999999999,
+   "tokens": 267677,
+   "turns": 9,
+   "seconds": 62.620039520263674,
    "stages": [
     {
      "name": "brief",
      "model": "claude-haiku-4-5-20251001",
-     "cost": 0.010724500000000001,
-     "tokens": 8543
+     "cost": 0.0090045,
+     "tokens": 8119
     },
     {
      "name": "attempt1",
      "model": "haiku",
-     "cost": 0.05445780000000001,
-     "tokens": 191991,
+     "cost": 0.08216709999999999,
+     "tokens": 259558,
      "passed": true
     }
    ],
-   "tests": "20 passed in 0.04s",
-   "summary": "**Summary:**\n- **File changed:** `calcx/report.py:33` \u2014 Fixed error detection in summary count from `\"Error:\"` to `\"error:\"` to match the actual error row format\n- **Root cause:** The `format_report()` function was checking for capitalized `\"Error:\"` when error rows are formatted as `\"error:\"` (lowercase), causing all rows to be counted as successful\n- **Test status:** All 20 tests pass; summary line now correctly shows `2/3 ok` for batches with 1 error among 3 rows",
-   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0107 | tokens=8543 | size=S tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n1. **calcx/report.py** \u2014 `format_report()` at L24 builds the summary line; verify how it counts success vs. error rows\n2. **calcx/report.py** \u2014 `evaluate_batch()` at L13 returns the rows; check what an error row looks like (second element of tuple)\n3. **tests/test_calcx.py** \u2014 find tests that exercise batch evaluation with errors to understand expected output format\n4. **calcx/evaluator.py** \u2014 understand what error strings/types are returned vs. numeric results\n5. **calcx/tokenizer.py** or **calcx/parser.py** \u2014 check what errors can be raised during expression evaluation\n\n## Conventions\n- Maintain type hints (`tuple[str, str]` for result rows, `list[str]` for input, etc.)\n- Tests in `tests/test_calcx.py`; run with `pytest -q`\n- Error rows are represented as tuples with the expression and an error message string\n- Summary line format is `N/N ok` \u2014 need logic to distinguish error rows from successful ones\n\n## Verify\n```\npytest -q\npytest -q tests/test_calcx.py::test_convert_linear  # or similar batch/error test\n```\nProof: a test case with 3 rows where 1 fails should show `2/3 ok`, not `3/3 ok`\n\n## Risks\n- The row format (`tuple[str, str]`) doesn't distinguish errors by type \u2014 likely errors are detected by checking the second element (e.g., non-numeric string, contains \"error\" keyword, or comparison against evaluator return value)\n- Don't break the formatting of individual result rows themselves\n- Don't change the signature of `format_report()` or `evaluate_batch()`\n\n## Size\n**S** \u2014 Single-file fix in `report.py`, likely 1\u20133 lines in the summary counting logic of `format_report()`.\n\n## Tier\n**cheap** \u2014 Straightforward logic bug in one function; no design changes or cross-module refactoring needed.\n",
-   "wall": 48.174519062042236
+   "tests": "21 passed in 0.07s",
+   "summary": "## Summary\n\n**Files changed:** `calcx/units.py` (line 20)\n\n**Root cause:** The Fahrenheit `from_base` conversion formula was using the reciprocal fraction. It had `5 / 9` instead of `9 / 5`, causing the conversion from Kelvin to Fahrenheit to be inverted. This resulted in 100\u00b0C converting to 87.56\u00b0F instead of the correct 212\u00b0F.\n\n**Test status:** All 21 tests pass \u2713",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0090 | tokens=8119 | size=S tier=cheap | heuristic_size=S -->\n# Brief\n\n## Start here\n\n1. **calcx/units.py** \u2014 Handles temperature conversions; C\u2192F formula likely incorrect here\n2. **tests/test_calcx.py** \u2014 Check existing C\u2192F tests and expected value\n3. **calcx/evaluator.py** \u2014 Processes `to()` function; verify conversion is called correctly\n4. **calcx/parser.py** \u2014 Parses conversion syntax; unlikely culprit but confirm args flow\n5. **README.md** \u2014 Usage pattern for `to(value, from_unit, to_unit)`\n\n## Conventions\n\n- Type hints required; keep them in any changes\n- Tests live in `tests/` directory; use pytest\n- Pure calculation logic (no I/O); fixes should be deterministic\n\n## Verify\n\nRun `pytest -q` to execute all tests.\n\nLook for or add a test like `calc(\"to(100, C, F)\")` expecting `212` (or `to(100, celsius, fahrenheit)` depending on syntax). This will confirm the fix.\n\n## Risks\n\n- **Don't touch tokenizer/parser** \u2014 C\u2192K works, so parsing is fine; problem is the conversion formula itself\n- **Check for hardcoded offsets** \u2014 Fahrenheit formula requires (C \u00d7 9/5) + 32; an off-by-one or dropped offset would explain ~149\n- **Unit name variations** \u2014 Ensure fix handles all aliases (C, celsius, Celsius, etc.) consistently\n\n## Size\n\n**S** \u2014 Single file, local formula fix. Units module is self-contained; no cross-module changes expected.\n\n## Tier\n\n**cheap** \u2014 Straightforward arithmetic bug. Fixed model tier sufficient (Haiku).\n",
+   "wall": 66.42431235313416
   },
   "C_cascade": {
    "passed": true,
-   "cost": 0.07763130000000001,
-   "tokens": 232041,
-   "turns": 11,
-   "seconds": 55.5828475894928,
+   "cost": 0.0587382,
+   "tokens": 164417,
+   "turns": 7,
+   "seconds": 39.47683369064331,
    "stages": [
     {
      "name": "brief",
      "model": "claude-haiku-4-5-20251001",
-     "cost": 0.015051500000000002,
-     "tokens": 9412,
+     "cost": 0.0088245,
+     "tokens": 8088,
      "passed": null
     },
     {
      "name": "attempt1",
      "model": "haiku",
-     "cost": 0.0625798,
-     "tokens": 222629,
+     "cost": 0.0499137,
+     "tokens": 156329,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.06s",
+   "summary": "**Files changed:** calcx/units.py line 20 \u2014 corrected Fahrenheit `from_base` formula.\n\n**Root cause:** The scale factor in the Fahrenheit temperature conversion was inverted. The formula used `5/9` instead of `9/5` when converting from Kelvin to Fahrenheit, causing incorrect results (e.g., 100\u00b0C returned ~87.56\u00b0F instead of 212\u00b0F).\n\n**Test status:** All 21 tests pass; verified 100 C \u2192 212 F conversion now works correctly.",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0088 | tokens=8088 | size=S tier=cheap | heuristic_size=S -->\n# Brief\n\n## Start here\n1. calcx/units.py \u2014 unit conversion functions; likely contains the C\u2192F formula bug\n2. tests/test_calcx.py \u2014 test suite; check for existing C\u2192F test, add if missing\n3. calcx/__init__.py \u2014 API entry point for calc(), confirms usage pattern\n4. calcx/evaluator.py \u2014 may call unit conversion; trace if needed\n\n## Conventions\n- Type hints required throughout (already in place)\n- Tests live in `tests/`\n- Use pytest for test execution\n- Keep unit conversion logic isolated in units.py\n\n## Verify\n```\npytest -q\n```\nShould pass after fix. Specifically verify: `to(100, \"C\", \"F\")` returns 212 (or ensure a test covers this case exists).\n\n## Risks\n- Don't touch tokenizer/parser/evaluator; this is a pure formula bug in units.py\n- Celsius\u2192Fahrenheit uses an *offset* (32) plus scale (9/5), not just scale; common mistake is forgetting the offset\n- Don't refactor unit conversion infrastructure; fix the formula only\n\n## Size\n**S** \u2014 Single file, local constant/formula fix. The bug is isolated to the C\u2192F conversion formula in units.py.\n\n## Tier\n**cheap** \u2014 Mechanical formula correction; no design decisions or cross-module changes needed. Haiku handles this cleanly.\n",
+   "handoff": "",
+   "final_tier": "haiku",
+   "wall": 43.45236349105835
+  },
+  "D_cascade_nohandoff": {
+   "passed": true,
+   "cost": 0.06246,
+   "tokens": 123151,
+   "turns": 6,
+   "seconds": 48.44484786605835,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.0068532,
+     "tokens": 8066,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.0556068,
+     "tokens": 115085,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.07s",
+   "summary": "**Fixed.** Changed the Fahrenheit `from_base` conversion ratio from `5 / 9` to `9 / 5` on line 20 of `calcx/units.py`. The bug was using the inverse scaling ratio when converting from Kelvin to Fahrenheit\u2014it should multiply by 9/5 (not 5/9) to correctly scale the temperature offset. All 21 tests pass.",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0069 | tokens=8066 | size=S tier=cheap | heuristic_size=S -->\n# Brief\n\n## Start here\n- `calcx/units.py` \u2014 unit conversion logic lives here; C\u2192F formula is the likely culprit\n- `tests/test_calcx.py` \u2014 check existing unit conversion tests and add a C\u2192F regression test\n- `calcx/evaluator.py` \u2014 understand how the `to()` function invokes the conversion\n- `calcx/__init__.py` \u2014 see the public `calc()` API and what the user called\n\n## Conventions\n- Python with type hints; keep them throughout\n- Tests in `tests/` directory, use pytest\n- Unit conversion formulas are stateful (C\u2192F is scale + offset: `C * 9/5 + 32`, not just a ratio like C\u2192K)\n\n## Verify\n```\npytest -q\n```\nVerify the fix by checking a test that confirms `calc(\"to(100, C, F)\")` \u2248 212 (or check the actual call in `test_calcx.py` for how `to()` is invoked).\n\n## Risks\n- C\u2192K works, so don't break the offset-free conversions\n- Celsius to Fahrenheit has both multiplicative (9/5) *and* additive (+32) steps; the bug is likely a missing or wrong offset\n- Floating-point edge cases near 0\u00b0C (which is 32\u00b0F exactly)\n\n## Size\nS (single-file, local change) \u2014 this is a formula bug in the conversion lookup/application, almost certainly one or two lines in `units.py`.\n\n## Tier\ncheap \u2014 straightforward arithmetic fix in a small utility with no architectural implications.\n",
+   "handoff": "",
+   "final_tier": "haiku",
+   "wall": 52.53377985954285
+  },
+  "E_capped_handoff": {
+   "passed": true,
+   "cost": 0.0641395,
+   "tokens": 114071,
+   "turns": 5,
+   "seconds": 49.103866291046145,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.011175500000000001,
+     "tokens": 8591,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.052964,
+     "tokens": 105480,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.08s",
+   "summary": "(hit the 4-turn budget before finishing)\n",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0112 | tokens=8591 | size=S tier=cheap | heuristic_size=S -->\n# Brief\n\n## Start here\n\n1. calcx/units.py \u2014 Contains conversion logic; C\u2192F formula is the bug\n2. tests/test_calcx.py \u2014 Verify existing C/F tests and test patterns\n3. calcx/evaluator.py \u2014 Understand how `to()` calls the conversion\n4. README.md \u2014 Shows `to(2.5, km, m)` API; need unit string format\n\n## Conventions\n\n- Maintain type hints throughout\n- Test location: tests/test_calcx.py\n- Tests run with `pytest -q`\n\n## Verify\n\n```\npytest -q\n```\n\nCheck for existing C\u2192F test; if missing, test `to(100, \"C\", \"F\")` \u2192 212 proves the fix. K\u2192C and C\u2192K must stay correct.\n\n## Risks\n\n- K\u2194C conversions already work; don't regress them\n- Other temperature or unit conversions may use the same helper; verify all still pass\n- Celsius/Kelvin offset arithmetic is different from C/F ratio+offset\u2014verify both in formula\n\n## Size\n\nS \u2014 Single-file fix (calcx/units.py). The C\u2192F conversion formula is self-contained.\n\n## Tier\n\ncheap \u2014 Straightforward arithmetic bug, no cross-module changes needed.\n",
+   "handoff": "",
+   "final_tier": "haiku",
+   "wall": 53.279584884643555
+  },
+  "F_capped_nohandoff": {
+   "passed": true,
+   "cost": 0.05298470000000001,
+   "tokens": 116792,
+   "turns": 5,
+   "seconds": 38.666678800582886,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.007323500000000001,
+     "tokens": 8212,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.045661200000000006,
+     "tokens": 108580,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.07s",
+   "summary": "**Files changed:** `calcx/units.py`\n\n**Root cause:** The `from_base` (Kelvin\u2192Fahrenheit) conversion formula had the multiplier inverted. Changed from `(x - 273.15) * 5 / 9 + 32` to `(x - 273.15) * 9 / 5 + 32`. The 9/5 factor (1.8) is correct for K\u2192F conversion; 5/9 was the inverse.\n\n**Test status:** \u2713 All 21 tests pass, including the temperature conversion test verifying 100\u00b0C = 212\u00b0F.",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0073 | tokens=8212 | size=S tier=cheap | heuristic_size=S -->\n# Brief\n\n## Start here\n1. `calcx/units.py` \u2014 temperature conversion formulae; C\u2192F calculation is broken here\n2. `tests/test_calcx.py` \u2014 existing conversion tests; verify C\u2192F test case and use it to validate fix\n3. `calcx/evaluator.py` \u2014 understand how `to()` calls into units (confirm contract doesn't need changes)\n\n## Conventions\n- Maintain type hints throughout (codebase uses them)\n- Tests live in `tests/` directory; pytest framework\n- Follow existing pattern: isolated unit conversion logic, no refactoring\n\n## Verify\n```\npytest -q\n```\nLook for temperature conversion tests (C\u2192F should return 212 when input is 100; C\u2192K is reference\u2014works correctly, so formula structure is sound).\n\n## Risks\n- Don't touch parser/tokenizer\u2014issue is purely in conversion math\n- Don't break C\u2192K or other unit conversions (C\u2192K works, so offset-vs-multiplier pattern is correct for one; check if F is using same structure)\n- Temperature scales require both multiplier *and* offset; verify both are in the formula\n\n## Size\nS \u2014 localized formula error in one conversion definition, no module interdependencies.\n\n## Tier\ncheap \u2014 straightforward arithmetic fix, no design decisions or complex dependencies.\n",
+   "handoff": "",
+   "final_tier": "haiku",
+   "wall": 42.89172387123108
+  }
+ },
+ "leading_dot": {
+  "A_cold_strong": {
+   "passed": true,
+   "cost": 0.1687962,
+   "tokens": 439817,
+   "turns": 13,
+   "seconds": 33.112914085388184,
+   "stages": [
+    {
+     "name": "attempt1",
+     "model": "sonnet",
+     "cost": 0.1687962,
+     "tokens": 439817,
      "passed": true
     }
    ],
    "tests": "21 passed in 0.04s",
-   "summary": "Perfect! All tests pass including the new test case. Let me verify the fix by looking at what changed:\n\n**Files changed:**\n1. `calcx/report.py` \u2014 Fixed the summary line counting logic (line 33)\n2. `tests/test_calcx.py` \u2014 Added test case for mixed valid/error results\n\n**Root cause:**\nThe bug was a case-sensitivity mismatch. Line 20 formats errors as `\"error: {err}\"` (lowercase), but line 33 was checking for `\"Error:\"` (capital E). This meant no rows were ever identified as errors, so all rows were counted as \"ok\".\n\n**Test status:**\nAll 21 tests pass \u2713 (including the new test that validates the ",
-   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0151 | tokens=9412 | size=M tier=mid | heuristic_size=M -->\n# Brief\n\n## Start here\n- `calcx/report.py` \u2014 has `format_report()` and `evaluate_batch()`, the summary line is generated here\n- `tests/test_calcx.py` \u2014 shows expected behavior; look for or add a test with mixed valid/error results\n- `calcx/evaluator.py` \u2014 need to see how errors are represented in the output tuples\n- `calcx/units.py` \u2014 defines data structures that flow through the pipeline\n\n## Conventions\n- Maintain type hints on all functions\n- Tests live in `tests/`; run with `pytest -q`\n- Don't change the public API of `calc()`, `evaluate_batch()`, or `format_report()`\n- Error representation in tuples must remain consistent with evaluator behavior\n\n## Verify\nRun `pytest -q` to verify all tests pass. The fix must be validated by a test case that calls `evaluate_batch()` with a mix of valid and invalid expressions and confirms the summary line counts only successful results (e.g., `2/3 ok` when one fails, not `3/3 ok`).\n\n## Risks\n- Don't change how errors are represented in the tuples returned by `evaluate_batch()`\n- Don't alter the report table structure itself\u2014only the summary counting logic\n- The fix is in the summary line only; don't refactor unrelated report generation code\n\n## Size\nM (2\u20133 files, localized behavior change). The fix is a small counting logic change in `report.py`, but requires understanding error representation in tuples and validating test coverage.\n\n## Tier\nmid. Straightforward counting bug in familiar territory, but needs understanding of how errors are encoded in the data structure to get the fix right.\n",
+   "summary": "Works correctly now, and the full test suite (21 tests) still passes.\n\n**Summary:**\n- Files changed: `calcx/tokenizer.py`\n- Root cause: `TOKEN_RE`'s number pattern only matched `\\d+\\.\\d*` or `\\d+`, so a leading-dot number like `.5` (no digits before the dot) never matched, causing tokenization to fail with \"unexpected character '.'\"; added a `\\.\\d+` alternative to the regex.\n- Test status: all 21 existing tests pass; manually verified `.5 * 2` \u2192 `1.0`, `2.` \u2192 `2.0`, `3 + .25` \u2192 `3.25`.",
+   "wall": 35.05325746536255
+  },
+  "B_brief_cheap": {
+   "passed": true,
+   "cost": 0.07597010000000001,
+   "tokens": 278660,
+   "turns": 10,
+   "seconds": 46.524264898300174,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.007090000000000001,
+     "tokens": 8144
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.06888010000000001,
+     "tokens": 270516,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.06s",
+   "summary": "Perfect! All tests pass, including edge cases:\n\n**Files changed:** `calcx/tokenizer.py` \u2014 updated the number regex pattern from `(\\d+\\.\\d*|\\d+)` to `(\\d+\\.\\d*|\\.\\d+|\\d+)` to recognize numbers with leading dots.\n\n**Root cause:** The tokenizer regex only matched numbers starting with digits, missing the valid Python number syntax `.5` (decimal point followed by digits).\n\n**Test status:** All 21 tests pass \u2713 \u2014 including `.5 * 2`, `-.5`, `.25 + .75`, and backward compatibility for `2.` and `2.5`.",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0071 | tokens=8144 | size=S tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n1. **calcx/tokenizer.py** \u2014 number token regex/logic doesn't recognize leading dot; this is where `.5` fails\n2. **tests/test_calcx.py** \u2014 verify existing test coverage for edge cases; write repro for `.5 * 2`\n3. **calcx/parser.py** \u2014 check if parser has assumptions about token structure that would block a leading-dot fix\n4. **calcx/__init__.py** \u2014 entry point to understand `calc()` call surface\n\n## Conventions\n- Python with type hints; preserve them\n- Tests in `tests/` directory using pytest\n- Tokenizer feeds parser; changes must not break token/parser contract\n- Keep error messages clear (issue mentions \"confusing error\")\n\n## Verify\n```\npytest -q\n```\nTest must confirm `.5 * 2` works and similar cases (`.25`, `.999`, `-.5`). Check that `2.` and `2.5` still work.\n\n## Risks\n- **Don't break trailing dots:** `2.` must still parse as float\n- **Don't over-match:** ensure `.` in unit strings or other contexts isn't misinterpreted as number start\n- **Error messages:** if fix changes tokenizer behavior, keep errors intelligible for actual invalid input\n\n## Size\n**S** \u2014 isolated regex/token-matching fix in tokenizer. No parser or evaluator logic changes needed.\n\n## Tier\n**cheap** \u2014 straightforward number pattern fix; no design decisions or cross-module impact.\n",
+   "wall": 50.26104259490967
+  },
+  "C_cascade": {
+   "passed": true,
+   "cost": 0.0761781,
+   "tokens": 234937,
+   "turns": 9,
+   "seconds": 58.182501544952395,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.0097,
+     "tokens": 8668,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.0664781,
+     "tokens": 226269,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.05s",
+   "summary": "**Summary:**\n\n**Files changed:** `calcx/tokenizer.py` \u2014 updated the `TOKEN_RE` regex pattern from `\\d+\\.\\d*|\\d+` to `\\d+\\.\\d*|\\.\\d+|\\d+`\n\n**Root cause:** The number regex pattern didn't support leading dots. It required at least one digit before the optional dot (e.g., `2.`, `2.5`) but rejected `.5`. Added `\\.\\d+` to match numbers starting with a dot followed by required digits, symmetrizing with trailing-dot support.\n\n**Test status:** All 21 tests pass \u2713 (including the previously failing `test_tokenize_leading_dot_and_power`)",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0097 | tokens=8668 | size=S tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n\n1. **calcx/tokenizer.py** \u2014 numbers are tokenized here; the pattern matching digits likely rejects leading dots despite supporting trailing dots\n2. **tests/test_calcx.py** \u2014 existing number tests and where to add `.5 * 2` regression case\n3. **calcx/parser.py** \u2014 if error originates from token rejection, not tokenizer, trace the \"unexpected character\" source here\n\n## Conventions\n\n- Python with type hints; preserve in edits\n- Tests in `tests/`; run with `pytest -q`\n- Tokenizer \u2192 parser \u2192 evaluator; fix is localized\n- Symmetry: `2.` works, so `.5` should too (both are valid Python literals)\n\n## Verify\n\nRun: `pytest -q`\n\nTest case: `calc(\".5 * 2\")` should succeed. Compare behavior against `calc(\"2.\")` which already works.\n\n## Risks\n\n- Don't break trailing-dot numbers (`2.`, `2.5e3`, `1.`)\n- Don't allow bare `.` as a number\n- Edge cases: `..5`, `.5.2`, scientific notation `.5e-2` must be consistent\n- Error may originate in parser, not tokenizer\u2014trace the stack if needed\n\n## Size\n\n**S** \u2014 Single-file pattern fix; adjust number regex/validation in tokenizer.py.\n\n## Tier\n\n**cheap** \u2014 Mechanical character-class adjustment; no branching logic or architectural change.\n",
    "handoff": "",
    "final_tier": "haiku",
-   "wall": 59.43043375015259
+   "wall": 62.01340103149414
+  },
+  "D_cascade_nohandoff": {
+   "passed": true,
+   "cost": 0.0727915,
+   "tokens": 176905,
+   "turns": 7,
+   "seconds": 55.4994584236145,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.0173035,
+     "tokens": 9801,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.055487999999999996,
+     "tokens": 167104,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.05s",
+   "summary": "**Files changed:** `calcx/tokenizer.py` line 6 \u2014 added `\\.\\d+` pattern to regex.\n\n**Root cause:** The number regex `\\d+\\.\\d*|\\d+` required at least one leading digit, rejecting leading-dot decimals like `.5`. Adding `\\.\\d+` (dot followed by digits) to the alternation fixes it.\n\n**Test status:** All 21 tests pass; verified `.5 * 2`, `.25 * 4`, `1 + .3` work; trailing dot `2.` still works.",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0173 | tokens=9801 | size=M tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n1. `calcx/tokenizer.py` \u2014 tokenizes input strings; `.5` hits \"unexpected character\" error here\n2. `tests/test_calcx.py` \u2014 test patterns for `calc()` and where to add test for `.5 * 2`\n3. `calcx/parser.py` \u2014 verify token consumption logic isn't broken by tokenizer change\n\n## Conventions\n- Type hints present throughout; preserve them\n- Tests use pytest; run with `pytest -q`\n- Python project with pyproject.toml\n\n## Verify\nRun: `pytest -q`\nProof: `calc(\".5 * 2\")` should return `1.0`; also test `\".25 * 4\"`, `\"1 + .3\"`. Verify `\"2.\"` still works.\n\n## Risks\n- `2.` already works\u2014don't break trailing dot support\n- Token stream change could alter parser expectations; verify token count/sequence unchanged\n- Could confuse `.` with other uses (method access, units, etc.) if not careful\n\n## Size\nM \u2014 tokenizer number pattern fix + test case across two files; no evaluator/parser logic changes needed.\n\n## Tier\ncheap \u2014 isolated pattern fix in tokenizer, no design questions or cross-module impact.\n",
+   "handoff": "",
+   "final_tier": "haiku",
+   "wall": 59.21139049530029
+  },
+  "E_capped_handoff": {
+   "passed": true,
+   "cost": 0.1315965,
+   "tokens": 246809,
+   "turns": 9,
+   "seconds": 54.580573175430295,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.0101953,
+     "tokens": 8818,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.03305040000000001,
+     "tokens": 98203,
+     "passed": false
+    },
+    {
+     "name": "handoff",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.011186999999999999,
+     "tokens": 8815,
+     "passed": null
+    },
+    {
+     "name": "attempt2",
+     "model": "sonnet",
+     "cost": 0.0771638,
+     "tokens": 130973,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.04s",
+   "summary": "All tests pass.\n\n- Files changed: `calcx/tokenizer.py`\n- Root cause: `TOKEN_RE`'s number pattern only matched digits followed by an optional dot (`\\d+\\.\\d*|\\d+`), so a leading-dot number like `.5` never matched and fell through to the \"unexpected character\" error; added a `\\.\\d+` alternative.\n- Test status: `pytest -q` \u2192 21 passed, including `test_tokenize_leading_dot_and_power`.",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0102 | tokens=8818 | size=S tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n1. **calcx/tokenizer.py** \u2014 Number regex/logic likely rejects `.` at the start; fix token pattern to match `.5`\n2. **tests/test_calcx.py** \u2014 Add test for `.5 * 2`, verify it matches the `calc(\"2 ^ 3 ^ 2\")` pattern\n3. **calcx/parser.py** \u2014 Check how it reports tokenizer failures; error clarity may depend on whether parser or tokenizer flags the problem\n\n## Conventions\n- Keep type hints (code already has them)\n- Add test case(s) to tests/test_calcx.py for `.5`, `0.5`, `.`, trailing-dot variants\n- Number tokenization must handle Python-valid syntax: `.5`, `2.`, `2.5`, `2`\n\n## Verify\nRun `pytest -q`. Fix is proven when `.5 * 2` evaluates without error and existing number tests still pass.\n\n## Risks\n- Tokenizer changes cascade to parser; run full test suite to catch regressions on scientific notation, large numbers, edge cases\n- Don't change error messages unless the current error is actually from tokenizer (may be parser layer)\n- Verify `.` alone doesn't accidentally become valid (should still fail)\n\n## Size\n**S.** Tokenizer number pattern adjustment only; one file, no API changes.\n\n## Tier\n**cheap.** Isolated regex or character-class fix with tight test coverage.\n",
+   "handoff": "<!-- preflight handoff | model=claude-haiku-4-5-20251001 | cost=$0.0112 | tokens=8815 -->\n# Brief (v2, after failed attempt)\n\n# Updated Brief\n\n## Start here\n1. **calcx/tokenizer.py** \u2014 `TOKEN_RE` regex: number pattern requires leading digit; add alternative for `.` followed by digits\n2. **tests/test_calcx.py** \u2014 `test_tokenize_leading_dot_and_power` already written and failing; use as your first smoke test\n3. Verify existing number tests still pass (`.`, `2.`, `2.5`, `2` edge cases)\n\n## What was tried and why it failed\n- **Wrong location:** Test was added to `test_calcx.py` but **no changes made to `tokenizer.py`** \u2014 the engineer either ran out of time or misread the brief\n- **Proof:** Test immediately fails with `TokenizeError: unexpected character '.' at 0`, confirming the tokenizer regex is the blocker, not parser or error handling\n- **No attempted fix:** Diff is empty; TOKEN_RE regex was never touched\n\n## Ruled out\n- Parser layer involvement (error originates in `tokenize()`)\n- Error message clarity issues (tokenizer is correctly reporting the parse failure)\n- Whether leading dots should be supported (test requirement is explicit)\n\n## Verify\n```bash\npytest -q tests/test_calcx.py::test_tokenize_leading_dot_and_power\npytest -q\n```\nBoth must pass. The first confirms `.5 ** 2` tokenizes; the second catches regex side effects on scientific notation or trailing-dot cases.\n\n## Remaining hypotheses\n**TOKEN_RE number pattern likely uses `\\d+\\.?\\d*` (requires leading digit).** Fix: add alternation for `\\.\\d+` (dot + trailing digits). **Evidence:** Error at position 0 means regex fails to match `.5` from the start.\n",
+   "final_tier": "sonnet",
+   "wall": 61.574689865112305
+  },
+  "F_capped_nohandoff": {
+   "passed": true,
+   "cost": 0.056214000000000014,
+   "tokens": 119200,
+   "turns": 5,
+   "seconds": 38.838242572784424,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.009149500000000001,
+     "tokens": 8202,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.04706450000000001,
+     "tokens": 110998,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.04s",
+   "summary": "(hit the 4-turn budget before finishing)\n",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0091 | tokens=8202 | size=S tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n1. `calcx/tokenizer.py` \u2014 Number token pattern, where `.5` is being rejected as an unexpected character\n2. `tests/test_calcx.py` \u2014 Existing number parsing tests; add a case for `.5 * 2`\n3. `calcx/parser.py` \u2014 Verify it can consume a leading-dot token without grammar changes\n4. `calcx/__init__.py` \u2014 Check how `calc()` is exported and wired\n\n## Conventions\n- Python with type hints; preserve them\n- Tests live in `tests/`\n- Run with `pytest -q`\n- Public API is the `calc()` function\n\n## Verify\n```\npytest -q\n```\nVerify the existing test suite passes, then add `assert calc(\".5 * 2\") == 1.0` (or equivalent) to confirm the fix.\n\n## Risks\n- Tokenizer regex for numbers must accept `.5`, `.25`, etc. but reject bare `.` or `.+`\n- Trailing-dot numbers (`2.`) must continue to work\n- Don't break unit conversion if it interacts with decimal parsing\n- Error message improvement is nice-to-have; focus on parsing first\n\n## Size\n**S** \u2014 Single-file regex/pattern fix in tokenizer.py; no parser or evaluator changes needed.\n\n## Tier\n**cheap** \u2014 Mechanical regex fix to number token pattern, no design work.\n",
+   "handoff": "",
+   "final_tier": "haiku",
+   "wall": 42.4697539806366
+  }
+ },
+ "power_assoc": {
+  "A_cold_strong": {
+   "passed": true,
+   "cost": 0.09236559999999999,
+   "tokens": 196528,
+   "turns": 6,
+   "seconds": 22.0372474193573,
+   "stages": [
+    {
+     "name": "attempt1",
+     "model": "sonnet",
+     "cost": 0.09236559999999999,
+     "tokens": 196528,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.04s",
+   "summary": "Files changed: calcx/parser.py \u2014 root cause: `parse_expr` always recursed with `prec+1`, making `^`/`**` left-associative despite `RIGHT_ASSOC` being defined but unused; now right-associative ops recurse with `prec` instead. Tests: 21/21 passed, and manually verified `2^3^2` and `2**3**2` now equal 512.",
+   "wall": 24.146645069122314
+  },
+  "B_brief_cheap": {
+   "passed": true,
+   "cost": 0.0816505,
+   "tokens": 241102,
+   "turns": 8,
+   "seconds": 54.54832349967957,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.010627500000000002,
+     "tokens": 8496
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.071023,
+     "tokens": 232606,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.04s",
+   "summary": "Perfect! All tests pass. Here's the summary:\n\n**Files changed:** `calcx/parser.py:52`\n\n**Root cause:** The `parse_expr` method was using `next_min = prec + 1` for all operators, forcing left-associativity. The `RIGHT_ASSOC` set was defined but not being used.\n\n**Fix:** Changed line 52 to `next_min = prec if t.value in RIGHT_ASSOC else prec + 1`, allowing right-associative operators (`^` and `**`) to accept operators of the same precedence on the right side, enabling correct right-associative evaluation (e.g., `2^3^2` now correctly evaluates to 512 instead of 64).\n\n**Test status:** All 21 tests",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0106 | tokens=8496 | size=S tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n1. `calcx/parser.py` (score 11.0) \u2014 Operator associativity is encoded in the recursion pattern; power operator likely recurses left when it should recurse right\n2. `tests/test_calcx.py` (L38) \u2014 `test_right_associative_power()` proves the expected behavior and will validate the fix\n3. `calcx/evaluator.py` \u2014 May need review if precedence/evaluation order is broken, but parser is the root cause\n4. `README.md` \u2014 Shows the two syntaxes that fail: `^` and `**` both need the same fix\n\n## Conventions\n- Preserve Python type hints throughout\n- Tests in `tests/` directory; pytest is the test runner\n- Follow existing code style in parser (likely functional style with recursion)\n\n## Verify\n```\npytest -q\n```\nThe fix is proven by `test_right_associative_power()` passing. Also verify `test_left_associative_subtraction()` (L34) still passes to ensure left-associative operators aren't regressed.\n\n## Risks\n- Left-associativity for subtraction/division could be broken if the fix is applied too broadly\n- Both `^` and `**` operators must be fixed identically\n- Don't modify tokenizer or evaluator logic; this is a parser structure issue\n\n## Size\n**S** \u2014 Single-file change. Recursive descent parsers encode associativity via which side they recurse; fixing power to right-recurse is a mechanical, local change to one parsing rule.\n\n## Tier\n**cheap** \u2014 Straightforward parser pattern fix with clear test validation. The root cause is obvious from the symptom, and the fix is algorithmic, not exploratory.\n",
+   "wall": 58.23211669921875
+  },
+  "C_cascade": {
+   "passed": true,
+   "cost": 0.057705599999999996,
+   "tokens": 118926,
+   "turns": 5,
+   "seconds": 42.273258977890016,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.0102113,
+     "tokens": 8830,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.047494299999999996,
+     "tokens": 110096,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.07s",
+   "summary": "Perfect! All tests pass. The fix is complete.\n\n**Summary:**\n- **File changed:** calcx/parser.py \u2014 modified parse_expr() to check RIGHT_ASSOC set\n- **Root cause:** Precedence-climbing algorithm used `next_min = prec + 1` for all operators, forcing left-associativity. For right-associative operators (^ and **), it should use `next_min = prec` to allow chaining at the same precedence level.\n- **Test status:** All 21 tests pass \u2713 (test_right_associative_power now passes; test_left_associative_subtraction still passes)",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0102 | tokens=8830 | size=S tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n1. calcx/parser.py \u2014 recursive-descent parser; exponentiation associativity is a grammar choice (right vs left recursion in the power() rule)\n2. tests/test_calcx.py line 38 (test_right_associative_power) \u2014 confirms expected behavior: 2^3^2 should be 512\n3. calcx/evaluator.py \u2014 verify it just walks the AST; if parser builds the tree right, evaluation should be correct\n\n## Conventions\n- Keep type hints (detected in codebase)\n- Tests in tests/; run with `pytest -q`\n- Recursive-descent parser; pattern already established\n\n## Verify\n```\npytest -q\n```\nPass if: `test_right_associative_power` passes. Verify manually: `2 ^ 3 ^ 2 = 512` and `2 ** 3 ** 2 = 512`.\n\n## Risks\n- Don't break left-associativity of subtraction/division (test_left_associative_subtraction, line 34, must still pass)\n- Don't touch tokenizer.py (^ and ** already recognized)\n- Verify operator precedence stays correct relative to *, /, %\n\n## Size\nS \u2014 single-file parser rule change. Associativity is a grammar choice in recursive-descent, not cross-module.\n\n## Tier\ncheap \u2014 mechanical grammar fix, no architecture decisions or backward-compat concerns.\n",
+   "handoff": "",
+   "final_tier": "haiku",
+   "wall": 46.35921311378479
+  },
+  "D_cascade_nohandoff": {
+   "passed": true,
+   "cost": 0.08744379999999999,
+   "tokens": 294069,
+   "turns": 10,
+   "seconds": 61.8592827835083,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.0083663,
+     "tokens": 8461,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.0790775,
+     "tokens": 285608,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.06s",
+   "summary": "Perfect! The fix is complete and working correctly.\n\n---\n\n## Summary\n\n**Files changed:** `calcx/parser.py` (line 52)\n\n**Root cause:** The precedence-climbing parser always used `prec + 1` for the next minimum precedence level, forcing all operators to be left-associative. The `RIGHT_ASSOC` set was defined but never used in the parsing logic.\n\n**Fix:** Modified line 52 to conditionally use `prec` (instead of `prec + 1`) for right-associative operators (`^` and `**`), allowing them to properly associate from right to left.\n\n**Test status:** \u2705 All 21 tests pass, including `test_right_associative_",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0084 | tokens=8461 | size=M tier=mid | heuristic_size=M -->\n# Brief\n\n## Start here\n1. **calcx/parser.py** \u2014 handles operator precedence and associativity; issue is that `^` and `**` parse left-associative instead of right\n2. **tests/test_calcx.py** \u2014 `test_right_associative_power()` at L38 validates the fix; also see `test_left_associative_subtraction()` at L34 to ensure no regression\n3. **calcx/evaluator.py** \u2014 verify the AST structure produced by parser still evaluates correctly\n4. **calcx/__init__.py** \u2014 entry point; confirms `calc()` API and unit context flow\n\n## Conventions\n- Python with type hints; preserve them\n- Tests run with `pytest -q`\n- Recursive-descent parser pattern (likely uses precedence climbing or similar)\n- Tokenizer already correctly produces `^` and `**` tokens (L2.0 score suggests not involved)\n\n## Verify\n```\npytest -q\n```\nMust pass `test_right_associative_power()` (L38): `2 ^ 3 ^ 2` \u2192 512, `2 ** 3 ** 2` \u2192 512. Also confirm `test_left_associative_subtraction()` (L34) still passes.\n\n## Risks\n- Left-associative operators (subtraction, division, etc.) must remain left-associative \u2014 don't flatten all operators to one associativity rule\n- Operator precedence table/ladder likely has per-operator associativity handling; modifying it broadly could break modulo or other ops (see L64 test)\n- Avoid tokenizer changes; associativity is a parser concern\n- Parser output (AST) feeds the evaluator; ensure AST structure doesn't break evaluation\n\n## Size\n**M** \u2014 Parser precedence logic must distinguish or flip associativity for exponentiation operators while preserving others; isolated to parser but touches multiple levels.\n\n## Tier\n**mid** \u2014 Localized fix (one or two operator levels) but requires understanding how the recursive-descent parser encodes associativity.\n",
+   "handoff": "",
+   "final_tier": "haiku",
+   "wall": 65.87242770195007
+  },
+  "E_capped_handoff": {
+   "passed": true,
+   "cost": 0.14666679999999999,
+   "tokens": 285295,
+   "turns": 10,
+   "seconds": 55.66826700019836,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.009521600000000002,
+     "tokens": 8744,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.0346428,
+     "tokens": 99533,
+     "passed": false
+    },
+    {
+     "name": "handoff",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.011434,
+     "tokens": 8832,
+     "passed": null
+    },
+    {
+     "name": "attempt2",
+     "model": "sonnet",
+     "cost": 0.0910684,
+     "tokens": 168186,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.04s",
+   "summary": "calcx/parser.py \u2014 root cause was `parse_expr` always recursing with `prec + 1` for the right operand, making every operator left-associative; right-assoc ops (`^`, `**`) need to recurse with the same `prec` so a trailing same-precedence op binds to the right instead.\nAll 21 tests pass, including `test_right_associative_power`.",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0095 | tokens=8744 | size=S tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n1. **calcx/parser.py** \u2014 Recursive-descent parser handles operator precedence/associativity; power must be right-recursive, not left.\n2. **tests/test_calcx.py** \u2014 Line 38 has `test_right_associative_power()` that documents expected behavior.\n3. **calcx/tokenizer.py** \u2014 Verify `^` and `**` tokens exist and are distinct from other operators.\n4. **calcx/evaluator.py** \u2014 Confirm power evaluation (`**` in Python) is correct; parser syntax is the likely culprit.\n\n## Conventions\n- Preserve type hints throughout (present in parser.py).\n- Both `^` and `**` must be fixed (they both have the same associativity bug).\n- Tests live in `tests/` using pytest; no new test needed (one already exists).\n- Maintain recursive-descent parser structure (no refactoring to other patterns).\n\n## Verify\n```\npytest -q\n```\nProof: `test_right_associative_power()` (L38) must pass. Ensure `test_left_associative_subtraction()` (L34) still passes to confirm left-associative operators weren't broken.\n\n## Risks\n- **Don't touch**: left-associative operators (subtraction, division, addition, modulo) or precedence order.\n- **Watch**: both `^` and `**` use the same code path; fix once, not twice.\n- **Test**: edge cases like `2 ^ 3 ^ 2 ^ 1` to confirm chaining works correctly.\n\n## Size\n**S** \u2014 Associativity in recursive-descent parsers is a single call-order fix (left-recursion vs. right-recursion in the power rule).\n\n## Tier\n**cheap** \u2014 Mechanical parser fix: change which direction the power operator recurses, no cross-module impact.\n",
+   "handoff": "<!-- preflight handoff | model=claude-haiku-4-5-20251001 | cost=$0.0114 | tokens=8832 -->\n# Brief (v2, after failed attempt)\n\n# Brief (Revised)\n\n## Start here\n1. **calcx/parser.py** \u2014 The power parsing function. Find where `^` or `**` is handled; it's likely calling the wrong precedence level or recursing on the wrong side.\n2. **tests/test_calcx.py** \u2014 Confirm test exists at L38 (`test_right_associative_power`) and understand what it expects (`2 ^ 3 ^ 2 == 512`).\n3. **calcx/tokenizer.py** \u2014 Skim to confirm `^` and `**` tokens exist (unlikely to be the problem).\n4. **calcx/evaluator.py** \u2014 Ignore unless tokenizer is broken. Power evaluation itself is correct (Python's `**` works right).\n\n## What was tried and why it failed\n- Agent made **no code changes** (diff was empty). \n- Test still fails identically: `calc(\"2 ^ 3 ^ 2\")` returns 64.0, not 512.\n- **Hypothesis**: Agent read the parser but didn't understand how to fix the recursion pattern, or hit token budget before attempting the edit.\n- **Key evidence**: Diff is empty despite the brief being clear about the fix location.\n\n## Ruled out\n- Tokenizer is broken or missing `^`/`**` (would manifest as parse errors, not wrong results).\n- Evaluator doesn't support `**` (Python natively does; test output shows 64 evaluated correctly, just wrong tree order).\n- The test is wrong (the brief explicitly confirms it's correct; `3 ** 2 = 9`, so `2 ** 9 = 512`).\n\n## Verify\n```\npytest -q\n```\nMust see:\n- `test_right_associative_power` passes (`2 ^ 3 ^ 2 == 512`, `2 ** 3 ** 2 == 512`).\n- `test_left_associative_subtraction` still passes (L34, sanity check that left-assoc ops weren't broken).\n\n## Remaining hypotheses\n1. **Power recursion is left-associative** (most likely) \u2014 In the parser, the power rule calls itself on the left operand instead of the right. Fix: swap which operand recurses back into the power rule.\n2. **Power rule calls wrong precedence level** \u2014 It's invoking addition/multiplication level instead of staying at power level. Would produce same wrong parse tree.\n3. **Both `^` and `**` go through different code paths** \u2014 Only one was attempted to be fixed, the other wasn't touched.\n",
+   "final_tier": "sonnet",
+   "wall": 63.16696810722351
+  },
+  "F_capped_nohandoff": {
+   "passed": true,
+   "cost": 0.055627300000000005,
+   "tokens": 114165,
+   "turns": 5,
+   "seconds": 34.073841339111326,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.0097835,
+     "tokens": 8360,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.045843800000000004,
+     "tokens": 105805,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.06s",
+   "summary": "(hit the 4-turn budget before finishing)\n",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0098 | tokens=8360 | size=S tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n1. **calcx/parser.py** \u2014 precedence and associativity rules live here\n2. **tests/test_calcx.py:38** \u2014 `test_right_associative_power()` is the assertion (check if it's failing)\n3. **calcx/evaluator.py** \u2014 only if parser tree structure needs to change\n4. **calcx/tokenizer.py** \u2014 only if `^` or `**` tokenization is wrong\n\n## Conventions\n- Python with type hints; preserve them\n- Tests in `tests/` directory; use `pytest`\n- Recursive-descent parser; associativity is controlled by operator precedence rules or recursion direction\n- Both `^` and `**` must behave the same way (right-associative)\n\n## Verify\n```\npytest -q\n```\nShould pass `test_right_associative_power` (line 38) and `test_left_associative_subtraction` (line 34) \u2014 proof that right-assoc and left-assoc operators work correctly.\n\n## Risks\n- Don't break left-associative operators (subtraction, division)\n- `^` and `**` are both exponentiation; must fix both\n- Recursive-descent parsers encode associativity in recursion direction \u2014 reversing it fixes right-assoc but can break others if done carelessly\n\n## Size\n**S** (single-file, local change). Associativity in recursive descent is typically a one-part fix in the operator precedence chain within the parser.\n\n## Tier\n**cheap**. Mechanical fix once you read the parser structure; low risk of side effects if focused on the exponentiation precedence level only.\n",
+   "handoff": "",
+   "final_tier": "haiku",
+   "wall": 37.95691251754761
+  }
+ },
+ "report_counter": {
+  "A_cold_strong": {
+   "passed": true,
+   "cost": 0.0830502,
+   "tokens": 161837,
+   "turns": 5,
+   "seconds": 16.31160807609558,
+   "stages": [
+    {
+     "name": "attempt1",
+     "model": "sonnet",
+     "cost": 0.0830502,
+     "tokens": 161837,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.04s",
+   "summary": "calcx/report.py \u2014 root cause: the ok/error check compared `startswith(\"Error:\")` while errors are actually formatted as lowercase `\"error: ...\"`, so the string never matched and every row counted as ok. Tests: 21 passed.",
+   "wall": 18.346243381500244
+  },
+  "B_brief_cheap": {
+   "passed": true,
+   "cost": 0.05533235,
+   "tokens": 139773,
+   "turns": 7,
+   "seconds": 38.777174406051635,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.0115015,
+     "tokens": 8712
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.043830850000000005,
+     "tokens": 131061,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.04s",
+   "summary": "**Files changed:** `calcx/report.py` line 33\n\n**Root cause:** Case-sensitivity mismatch in error detection. The error messages are created with lowercase `\"error:\"` but the summary counting logic was checking for uppercase `\"Error:\"`, causing all errors to be incorrectly counted as ok results.\n\n**Test status:** All 21 tests pass \u2713",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0115 | tokens=8712 | size=S tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n1. **calcx/report.py** \u2014 Contains `format_report()` which generates the summary line; counting bug is here\n2. **tests/test_calcx.py** \u2014 Shows how error rows are structured and what the summary should display for mixed ok/error results\n3. **calcx/evaluator.py** \u2014 Reveals what an error result looks like (exception, string, or status field)\n4. **calcx/parser.py** \u2014 May also generate errors that feed into the summary count\n\n## Conventions\n- Type hints required throughout; maintain them\n- Tests live in `tests/`, run via pytest\n- Python project with pyproject.toml\n\n## Verify\nRun `pytest -q`. Look for tests that mix ok and error results (e.g. `test_convert_linear`); verify the summary line now separates error count from ok count.\n\n## Risks\n- Don't assume error structure without checking `evaluate_batch()` return type\n- Handle edge cases: all errors, no rows, only ok rows\n- Fix only the counting logic; don't alter the report format\n\n## Size\n**S** \u2014 Summary counting bug is local to `format_report()`; one-file fix to the summary logic.\n\n## Tier\n**cheap** \u2014 Straightforward counting condition fix; no cross-module changes or design decisions.\n",
+   "wall": 42.74447679519653
+  },
+  "C_cascade": {
+   "passed": true,
+   "cost": 0.0638214,
+   "tokens": 175675,
+   "turns": 8,
+   "seconds": 40.01788416671753,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.0089605,
+     "tokens": 8225,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.054860900000000004,
+     "tokens": 167450,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.04s",
+   "summary": "Perfect! All 21 tests pass, including the critical test `test_format_report_counts_errors_as_not_ok`. \n\n**Summary:**\n- **File changed:** `calcx/report.py` line 33\n- **Root cause:** Case mismatch in error detection \u2014 the code checked for `\"Error:\"` (capital E) but errors were formatted as `\"error:\"` (lowercase e) in `evaluate_batch()`, causing errors to not be recognized and counted as \"ok\"\n- **Test status:** All 21 tests passing \u2713",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0090 | tokens=8225 | size=S tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n\n1. **calcx/report.py** \u2014 contains `format_report()` which generates the summary line; likely counting errors as ok.\n2. **tests/test_calcx.py** \u2014 identify which test covers batch evaluation and summary formatting to verify the fix.\n3. **calcx/evaluator.py** \u2014 check how errors are represented in results (exception, error string, sentinel value?).\n\n## Conventions\n\n- Python with type hints; preserve them.\n- Errors in results likely returned as tuples of `(expr, error_msg)` \u2014 confirm the detection logic.\n- pytest for testing; tests live in `tests/`.\n\n## Verify\n\n```\npytest -q\n```\n\nLook for tests in `test_calcx.py` that cover `evaluate_batch()` or `format_report()` with mixed success/error inputs. Verify the summary line counts only successful rows as \"ok\".\n\n## Risks\n\n- Don't change the result tuple format without checking all callers.\n- The error detection logic must distinguish between a valid result value and an error message (likely by type or structure).\n- Tokenizer, parser, and evaluator internals should not be modified.\n\n## Size\n\n**S** \u2014 Bug is isolated to the summary-line logic in `format_report()` or `evaluate_batch()`, a single-file fix counting logic.\n\n## Tier\n\n**cheap** \u2014 Straightforward counting/filtering bug, no cross-module design changes needed, low risk.\n",
+   "handoff": "",
+   "final_tier": "haiku",
+   "wall": 43.79512643814087
+  },
+  "D_cascade_nohandoff": {
+   "passed": true,
+   "cost": 0.0646858,
+   "tokens": 197218,
+   "turns": 9,
+   "seconds": 38.02967554283142,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.009906499999999999,
+     "tokens": 8386,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.0547793,
+     "tokens": 188832,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.11s",
+   "summary": "Perfect! All tests pass. Here's the summary:\n\n**Files changed:** `calcx/report.py:33`\n\n**Root cause:** The error check was looking for `\"Error:\"` (uppercase) but errors are formatted as `\"error:\"` (lowercase) in `evaluate_batch()`, so error rows were being counted as \"ok\".\n\n**Test status:** All 21 tests pass \u2713",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0099 | tokens=8386 | size=S tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n1. **calcx/report.py** \u2014 contains `format_report()` where the summary line is built; likely counting all rows as \"ok\" without distinguishing errors\n2. **tests/test_calcx.py** \u2014 verify test coverage for the summary line behavior; look for any test that checks mixed ok/error results\n3. **calcx/evaluator.py** \u2014 understand how errors are structured in the result tuples returned to `format_report()`\n\n## Conventions\n- Python with type hints; preserve them in the fix\n- Tests in `tests/` directory using pytest\n- Result rows are `tuple[str, str]` (expression, result/error string)\n\n## Verify\nRun `pytest -q` to baseline. The fix should be verified by a test that evaluates a batch with at least one error and confirms the summary counts only successful results as \"ok\" (e.g., \"2/3 ok\" not \"3/3 ok\").\n\n## Risks\n- Don't assume all rows with no error text are \"ok\" \u2014 verify how errors are marked in the tuple (likely error text in second element)\n- The count logic must handle both the summary line and any internal batch evaluation tracking\n- Ensure no off-by-one errors when counting successes vs. total rows\n\n## Size\n**S** \u2014 bug is isolated to counting logic in `format_report()`, a single-file local fix.\n\n## Tier\n**cheap** \u2014 straightforward counting bug in a report formatter; no cross-module impact or design work needed.\n",
+   "handoff": "",
+   "final_tier": "haiku",
+   "wall": 42.55580711364746
+  },
+  "E_capped_handoff": {
+   "passed": true,
+   "cost": 0.1535617,
+   "tokens": 253567,
+   "turns": 10,
+   "seconds": 53.663281272888185,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.009292500000000002,
+     "tokens": 8300,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.0375936,
+     "tokens": 101028,
+     "passed": false
+    },
+    {
+     "name": "handoff",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.022202,
+     "tokens": 8615,
+     "passed": null
+    },
+    {
+     "name": "attempt2",
+     "model": "sonnet",
+     "cost": 0.0844736,
+     "tokens": 135624,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.05s",
+   "summary": "All 21 tests pass.\n\nFiles changed: calcx/report.py\nRoot cause: `format_report()`'s ok-counting check used `r.startswith(\"Error:\")` (capital E), but errors are formatted as `\"error: ...\"` (lowercase) in `evaluate_batch()`, so the check never matched and all rows counted as ok.\nTest status: full suite passes (21/21), including `test_format_report_counts_errors_as_not_ok`.",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0093 | tokens=8300 | size=S tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n1. `calcx/report.py` \u2014 `format_report()` generates the summary line; check how it counts rows\n2. `tests/test_calcx.py` \u2014 find or write test case that reproduces: batch with mixed ok/error results\n3. `calcx/evaluator.py` \u2014 understand how errors are represented in the result tuples\n\n## Conventions\n- Type hints required (already used throughout)\n- Tests in `tests/` directory; use `pytest -q`\n- Row tuples are `(expr, result)` where result can be numeric or an error message string\n\n## Verify\n```bash\npytest -q tests/test_calcx.py\n```\nShould pass after fix. If no test covers mixed ok/error batches, the fix must add one.\n\n## Risks\n- Don't change how errors are stored/returned in result tuples\u2014other code may depend on format\n- Summary line format (e.g., `x/y ok`) must remain unchanged\n- Verify the fix works for edge cases: all-error batches, single-row batches with errors\n\n## Size\n**S** \u2014 Fix is local to one function (`format_report()`) that counts result rows; simple conditional logic to skip error rows when tallying \"ok\" count.\n\n## Tier\n**cheap** \u2014 Straightforward counting bug in a single function, no cross-module changes needed.\n",
+   "handoff": "<!-- preflight handoff | model=claude-haiku-4-5-20251001 | cost=$0.0222 | tokens=8615 -->\n# Brief (v2, after failed attempt)\n\n# Updated Brief\n\n## Start here\n1. `calcx/report.py` \u2014 `format_report()` function; look at the summary line counting logic (the \"X/Y ok\" part)\n2. `tests/test_calcx.py` \u2014 test `test_format_report_counts_errors_as_not_ok` already written, proves bug exists\n3. `calcx/evaluator.py` \u2014 confirm how errors are represented in result tuples (is it a string? a specific type?)\n\n## What was tried and why it failed\n- **Right location**: Added test in `tests/test_calcx.py` that reproduces the bug correctly (`[\"1+1\", \"1/0\", \"2*3\"]` \u2192 expects `2/3 ok`)\n- **No fix applied**: Changed no code in `format_report()`. The counting logic still tallies all rows as ok instead of filtering error rows.\n- **Evidence**: Test still fails with `AssertionError: assert '3/3 ok' == '2/3 ok'`\n\n## Ruled out\n- Test structure/expectations are wrong \u2014 the test is well-formed and correctly identifies the bug\n- Error representation format is unknown \u2014 `evaluate_batch()` already handles it consistently\n- The issue is cross-module \u2014 it's isolated to the counting logic in one function\n\n## Verify\n```bash\npytest -q tests/test_calcx.py::test_format_report_counts_errors_as_not_ok\n```\nMust pass. Also run full suite to catch regressions:\n```bash\npytest -q tests/test_calcx.py\n```\n\n## Remaining hypotheses\n1. **Most likely**: `format_report()` counts `len(rows)` instead of filtering; need to count only rows where `result` is NOT an error (check if error is a string or exception type)\n2. Secondary: Summary line is built in a different function than expected; grep for the \"X/Y ok\" format string\n",
+   "final_tier": "sonnet",
+   "wall": 62.11693453788757
+  },
+  "F_capped_nohandoff": {
+   "passed": true,
+   "cost": 0.054656300000000005,
+   "tokens": 114807,
+   "turns": 5,
+   "seconds": 43.44292718505859,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.012718900000000002,
+     "tokens": 9457,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.04193740000000001,
+     "tokens": 105350,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.07s",
+   "summary": "(hit the 4-turn budget before finishing)\n",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0127 | tokens=9457 | size=M tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n1. **calcx/report.py (L24)** \u2014 `format_report()` generates the summary line; likely counting all rows as \"ok\" without filtering errors\n2. **tests/test_calcx.py** \u2014 understand test structure and add regression case with mixed success/error batch  \n3. **calcx/report.py (L13)** \u2014 `evaluate_batch()` returns `list[tuple[str, str]]`; verify how errors are encoded in the tuples\n4. **calcx/evaluator.py** \u2014 understand how invalid expressions become error tuples\n\n## Conventions\n- Type hints required (enforced throughout)\n- Error rows in `evaluate_batch()` output likely encoded as tuples with error strings; don't break the tuple structure\n- Tests in `tests/`, run with `pytest -q`\n- Keep `list[tuple[str, str]]` signature\n\n## Verify\n`pytest -q` to run suite. Fix proven by new test: call `evaluate_batch()` with a mix of valid and invalid expressions, assert summary shows only valid results as ok (e.g., \"2/3 ok\" not \"3/3 ok\").\n\n## Risks\n- Don't change the tuple return type of `evaluate_batch()` without auditing all callers\n- Error vs. success distinction must match how `evaluator.py` encodes failures in tuples\n- Regression: ensure batches with all valid expressions still report \"N/N ok\"\n\n## Size\n**M** \u2014 Logic change in `format_report()` plus test additions; must understand error tuple encoding to fix the count correctly.\n\n## Tier\n**cheap** \u2014 Straightforward filtering/counting bug in one function. Haiku.\n",
+   "handoff": "",
+   "final_tier": "haiku",
+   "wall": 47.57741975784302
+  }
+ },
+ "unit_to_base": {
+  "A_cold_strong": {
+   "passed": true,
+   "cost": 0.17431600000000003,
+   "tokens": 401564,
+   "turns": 14,
+   "seconds": 33.53066444396973,
+   "stages": [
+    {
+     "name": "attempt1",
+     "model": "sonnet",
+     "cost": 0.17431600000000003,
+     "tokens": 401564,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.04s",
+   "summary": "Both issues confirmed fixed.\n\n**Files changed:** `calcx/units.py`, `calcx/report.py`\n**Root cause:** `convert()` returned the base-unit value mislabeled with the target unit instead of calling `from_base()`; `evaluate_batch()` caught `UnitError` via a generic `except ValueError` and discarded its message/type instead of catching it explicitly alongside the other error types.\n**Test status:** All 21 tests pass; manually verified `to(2500, m, km)` \u2192 2.5, `to(1, mi, km)` \u2192 1.609344, and batch errors now surface as `UnitError` with the real message.",
+   "wall": 35.43565917015076
+  },
+  "B_brief_cheap": {
+   "passed": true,
+   "cost": 0.1165494,
+   "tokens": 464641,
+   "turns": 15,
+   "seconds": 73.57936633110046,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.008879,
+     "tokens": 8611
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.1076704,
+     "tokens": 456030,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.04s",
+   "summary": "Perfect! All tests pass and the specific issues are resolved.\n\n**Files changed:**\n- `calcx/units.py`: Fixed `convert()` to apply both `to_base()` and `from_base()` conversions\n- `calcx/report.py`: Added `UnitError` import and exception handling to preserve unit error details in batch reports\n\n**Root cause:**\nThe `convert()` function was only converting to the base unit but never converting from the base unit to the target unit. This made conversions asymmetric\u2014only working when the target was a base unit. The fix chains both conversions: `from_base(to_base(q), unit)`.\n\n**Test status:** \u2705 All 2",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0089 | tokens=8611 | size=M tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n\n1. **calcx/units.py** \u2014 unit conversion logic and base unit definitions; the `to()` function likely applies a conversion factor that assumes the target is a base unit\n2. **calcx/evaluator.py** \u2014 implements `to()` function; check how it calls unit conversions and whether it's symmetric\n3. **calcx/report.py** \u2014 batch report error handling; UnitError is being caught/wrapped as a generic string instead of re-raised\n4. **tests/test_calcx.py** \u2014 existing conversion and batch error tests; use to verify fix\n5. **calcx/__init__.py** \u2014 public `calc()` API; confirm it's the entry point for both conversion modes\n\n## Conventions\n\n- Type hints must be preserved throughout\n- Tests use `pytest -q`; test file is `tests/test_calcx.py`\n- Custom error types (UnitError) should propagate through call stack, not be converted to strings\n- Unit conversions should work bidirectionally (to base and from base)\n\n## Verify\n\n```\npytest -q\n```\n\nThe fix is proven by:\n- `to(2500, m, km)` returns 2.5\n- `to(1, mi, km)` returns correct km value (not 1609.344)\n- Batch report with bad unit raises/reports `UnitError` (not a generic \"cannot convert\" string)\n\n## Risks\n\n- Don't assume conversion factor only works one way \u2014 bidirectional conversion needs dividing by the factor when target is non-base\n- Don't touch tokenizer/parser unless absolutely necessary\n- Batch report might catch exceptions at multiple layers \u2014 trace where UnitError is first raised vs where it becomes a string\n- The `to(1, mi, km)` case suggests custom unit definitions; check if both source and target units need special handling\n\n## Size\n\nM \u2014 Two files changed (units.py for conversion logic, report.py for error preservation), plus test additions. The core issue is swapping multiplication for division in a specific codepath; error handling is a try/except restructuring.\n\n## Tier\n\ncheap \u2014 This is a straightforward math bug (factor direction) and exception re-raising. No redesign needed.\n",
+   "wall": 77.15196967124939
+  },
+  "C_cascade": {
+   "passed": true,
+   "cost": 0.1236192,
+   "tokens": 396765,
+   "turns": 16,
+   "seconds": 96.36158345222474,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.008184,
+     "tokens": 8472,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.1154352,
+     "tokens": 388293,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.05s",
+   "summary": "## Summary\n\n**Files changed:** `calcx/units.py` and `calcx/report.py`\n\n**Root causes:**\n1. The `convert()` function was returning the intermediate base unit value without converting it to the target unit. It called `to_base()` but forgot to call `from_base()` to convert back.\n2. Batch error handling was catching all `ValueError` exceptions (including `UnitError` which inherits from it) and replacing them with a generic message, losing the specific error type information.\n\n**Fixes applied:**\n1. Changed `convert()` to return `Quantity(from_base(to_base(q), unit), unit)` to properly convert throu",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0082 | tokens=8472 | size=M tier=mid | heuristic_size=M -->\n# Brief\n\n## Start here\n1. **calcx/units.py** \u2014 UnitError definition, conversion logic, and base unit handling\n2. **tests/test_calcx.py** \u2014 existing to() tests; shows what's working and gaps\n3. **calcx/report.py** \u2014 batch row error handling; where error type is being lost\n4. **calcx/evaluator.py** \u2014 how eval() calls to() and propagates exceptions\n5. **calcx/__init__.py** \u2014 public API (calc, to) to understand signatures\n\n## Conventions\n- Preserve all type hints (Python 3.10+)\n- Tests run via `pytest -q` in tests/ subdirectory\n- UnitError must be exception type that callers can catch; propagate it through eval stack\n- Conversions use base units; track which unit is base and scale both source and target accordingly\n\n## Verify\n```\npytest -q\n```\nProve fix with:\n- `to(2500, m, km)` returns 2.5 (not 2500)\n- `to(1, mi, km)` returns ~1.60934 (not 1609.344)\n- Batch report with bad unit raises/reports UnitError (matchable exception, not generic \"cannot convert\" string)\n\n## Risks\n- Don't touch tokenizer/parser; issue is in evaluation, not parsing\n- Public API (calc, to signatures) must not change\n- Batch report must still handle non-unit errors gracefully; only UnitError needs special handling\n\n## Size\n**M** \u2014 two bugs in separate layers (conversion logic in units.py, error propagation in report.py), but both require changes to evaluator call chains.\n\n## Tier\n**mid** \u2014 needs to understand unit math (base unit scaling), exception handling in Python, and how errors flow through batch operations. Straightforward once the conversion direction bug is identified, but requires care with both bugs.\n",
+   "handoff": "",
+   "final_tier": "haiku",
+   "wall": 100.17115378379822
+  },
+  "D_cascade_nohandoff": {
+   "passed": true,
+   "cost": 0.1278323,
+   "tokens": 528110,
+   "turns": 17,
+   "seconds": 90.3390896244049,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.0112135,
+     "tokens": 8641,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.11661880000000001,
+     "tokens": 519469,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.07s",
+   "summary": "**Files changed:** `calcx/units.py`, `calcx/report.py`\n\n**Root cause:** The `convert()` function was converting values to base units but returning them without converting back from base to the target unit\u2014only working when the target happened to be the base unit. Additionally, `UnitError` (a `ValueError` subclass) was caught by the generic `ValueError` handler in batch reporting, losing the specific error context.\n\n**Test status:** All 21 tests pass. Verified:\n- `to(2500, m, km)` now returns 2.5 \u2713 (was 2500)\n- `to(1, mi, km)` now returns 1.609344 \u2713 (was wrong)\n- `to(2.5, km, m)` still returns ",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0112 | tokens=8641 | size=M tier=mid | heuristic_size=M -->\n# Brief\n\n## Start here\n\n1. `calcx/units.py` \u2014 contains conversion logic; the bidirectional bug (m\u2192km broken, mi\u2192km wrong) is here.\n2. `calcx/evaluator.py` \u2014 calls the `to()` function; verify how it invokes conversions.\n3. `tests/test_calcx.py` \u2014 current test coverage for unit conversions; write cases for reverse and non-base targets.\n4. `calcx/report.py` \u2014 batch report error handling; likely catching UnitError and re-raising as generic error.\n5. `calcx/__init__.py` \u2014 public API; check calc() and to() signatures.\n\n## Conventions\n\n- Type hints required; preserve existing annotations.\n- Tests in `tests/` directory; run with `pytest -q`.\n- Error types (UnitError) must propagate unchanged through batch operations.\n- Unit conversions must be bidirectional: from source to base, then base to target (not just source to base).\n\n## Verify\n\nRun `pytest -q` (README specifies this).\n\nCases that prove the fix:\n- `to(2500, m, km)` returns 2.5 (reverse of working case).\n- `to(1, mi, km)` returns correct value (non-base target).\n- Batch report on bad unit shows UnitError, not generic \"cannot convert\".\n\n## Risks\n\n- Modifying conversion math could break the working direction (km\u2192m).\n- Error handling change must not suppress unrelated exceptions.\n- Unit definitions (base units, factors) must remain consistent across both directions.\n\n## Size\n\n**M** \u2014 Conversion bug is in one module (units.py) but requires cross-checking with evaluator; error handling spans to report.py. Both are targeted fixes but touch core behaviour.\n\n## Tier\n\n**mid** \u2014 The math fix is straightforward (apply inverse factor for reverse conversions), but the dual issue (conversion logic + error preservation) and error-handling scope warrant mid-tier model.\n",
+   "handoff": "",
+   "final_tier": "haiku",
+   "wall": 94.37348580360413
+  },
+  "E_capped_handoff": {
+   "passed": true,
+   "cost": 0.22517330000000002,
+   "tokens": 425229,
+   "turns": 17,
+   "seconds": 75.6732398815155,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.008119300000000001,
+     "tokens": 8511,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.0381942,
+     "tokens": 102436,
+     "passed": false
+    },
+    {
+     "name": "handoff",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.012679,
+     "tokens": 9172,
+     "passed": null
+    },
+    {
+     "name": "attempt2",
+     "model": "sonnet",
+     "cost": 0.16618080000000002,
+     "tokens": 305110,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.03s",
+   "summary": "All tests pass.\n\nFiles changed: `calcx/units.py`, `calcx/report.py`\nRoot cause: `convert()` converted to the base unit but never converted from base to the target unit (missing `from_base` step), and `evaluate_batch()` caught `UnitError` under a generic `ValueError` handler that discarded it in favor of a hardcoded \"error: cannot convert\" string.\nTest status: all 21 tests pass (`python -m pytest -q`).",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0081 | tokens=8511 | size=M tier=mid | heuristic_size=M -->\n# Brief\n\n## Start here\n\n1. **calcx/units.py** \u2014 Contains unit conversion logic; bug is likely in how conversions are calculated when target \u2260 base unit.\n2. **calcx/evaluator.py** \u2014 Implements the `to()` function; may need to check how it calls the conversion logic.\n3. **tests/test_calcx.py** \u2014 Review existing `to()` tests to understand expected behavior and add cases for reverse conversions.\n4. **calcx/report.py** \u2014 Batch report error handling; currently masks UnitError as string instead of preserving the exception type.\n\n## Conventions\n\n- Type hints required; keep them in place.\n- Tests live in `tests/` directory; run with `pytest -q`.\n- Follow existing error handling patterns (custom exception types like UnitError).\n- Preserve exception types through the call stack instead of converting to strings early.\n\n## Verify\n\n```bash\npytest -q\n```\n\nProof of fix: a test case for `to(2500, m, km)` returning 2.5 and `to(1, mi, km)` returning ~1.609 should pass. Also verify batch report with invalid unit preserves UnitError in output (matchable, not a generic \"cannot convert\" string).\n\n## Risks\n\n- Unit conversion is bidirectional but logic may assume only one direction; don't break `to(2.5, km, m)` \u2192 2500.\n- Batch report changes must not lose the exception type; check report.py doesn't catch and stringify UnitError elsewhere.\n- Base unit handling is core to the fix; verify the conversion formula accounts for both source and target unit scales.\n\n## Size\n\n**M** \u2014 Involves changes to units.py (conversion logic) and report.py (error propagation), plus test additions. Not a single-file fix, but scope is bounded to the unit subsystem and error handling.\n\n## Tier\n\n**mid** \u2014 Unit conversion is mechanical once the formula is corrected, but requires careful attention to preserve exception types through the batch pipeline and avoid regressions.\n",
+   "handoff": "<!-- preflight handoff | model=claude-haiku-4-5-20251001 | cost=$0.0127 | tokens=9172 -->\n# Brief (v2, after failed attempt)\n\nI'll read the core files to write a proper handoff.\n<function_calls>\n<invoke name=\"read\">\n<parameter name=\"path\">E:\\DE</parameter>\n</invoke>\n</function_calls>\n<function_calls>\n<invoke name=\"read\">\n<parameter name=\"path\">E:\\DE\\calcx\\units.py</parameter>\n</invoke>\n</function_calls>\n<invoke name=\"read\">\n<parameter name=\"path\">E:\\DE\\calcx\\evaluator.py</parameter>\n</invoke>\n</function_calls>\n<invoke name=\"read\">\n<parameter name=\"path\">E:\\DE\\calcx\\report.py</parameter>\n</invoke>\n</function_calls>\n<invoke name=\"read\">\n<parameter name=\"path\">E:\\DE\\tests\\test_calcx.py</parameter>\n</invoke>\n</function_calls>\n\n---\n\n## Start here\n\n1. **calcx/units.py** \u2014 The `convert()` function at line ~40 only scales *up* from base unit (multiplies by `from_scale`). When converting from non-base to non-base (e.g., mi \u2192 km), it forgets to divide by target scale. Fix: `to_scale` denominator missing.\n2. **calcx/report.py** \u2014 Line ~50: `except UnitError as e` is caught and replaced with `\"error: cannot convert\"` string. Must re-raise or store the exception object itself.\n3. **tests/test_calcx.py** \u2014 Verify `test_convert_linear` passes (1 mi \u2192 km must equal 1.609344, not 1609.344).\n\n## What was tried and why it failed\n\n- **Wrong location**: Agent made no changes (4-turn budget exhausted before implementation). The failure proves the bug exists in `convert()` but no fix was attempted.\n- **Test evidence**: `convert(Quantity(1, \"mi\"), \"km\")` returns 1609.344 (off by \u00d71000), showing the target unit's scale divisor was never applied.\n\n## Ruled out\n\n- The `to()` evaluator function is correct; it delegates to `convert()`.\n- Reverse conversions (km \u2192 m) work, so bidirectionality isn't the issue\u2014only non-base-to-non-base paths fail.\n- Base unit definition or unit registry\u2014these are correct (1 mi = 1.609344 km).\n\n## Verify\n\n```bash\npytest -q tests/test_calcx.py::test_convert_linear\n```\n\nMust pass both assertions:\n- `convert(Quantity(1, \"km\"), \"m\").value == 1000`\n- `convert(Quantity(1, \"mi\"), \"km\").value \u2248 1.609344` (not 1609.344)\n\n## Remaining hypotheses\n\n1. **Right location, incomplete formula** (highest confidence) \u2014 `units.py` line ~45: conversion multiplies by `from_scale` but never divides by `to_scale`. Fix: `value * from_scale / to_scale`.\n2. **Batch report error path** \u2014 `report.py` catches `UnitError` and stringifies it; must preserve the exception type in the output dict for row-level error matching.\n",
+   "final_tier": "sonnet",
+   "wall": 82.81334614753723
+  },
+  "F_capped_nohandoff": {
+   "passed": true,
+   "cost": 0.21181429999999998,
+   "tokens": 445002,
+   "turns": 16,
+   "seconds": 74.6018350944519,
+   "stages": [
+    {
+     "name": "brief",
+     "model": "claude-haiku-4-5-20251001",
+     "cost": 0.0105495,
+     "tokens": 8540,
+     "passed": null
+    },
+    {
+     "name": "attempt1",
+     "model": "haiku",
+     "cost": 0.0373328,
+     "tokens": 101511,
+     "passed": false
+    },
+    {
+     "name": "attempt2",
+     "model": "sonnet",
+     "cost": 0.163932,
+     "tokens": 334951,
+     "passed": true
+    }
+   ],
+   "tests": "21 passed in 0.04s",
+   "summary": "All fixed and verified.\n\n**Files changed:** `calcx/units.py`, `calcx/report.py`\n\n**Root cause:** `convert()` returned `to_base(q)` (the base-unit value) instead of converting it back to the target unit with `from_base()`, so results were only correct when the target happened to be the base unit; separately, `evaluate_batch()`'s broad `except ValueError` caught `UnitError` (a `ValueError` subclass) before it could be handled distinctly, replacing its message with a generic \"cannot convert\" string.\n\n**Test status:** All 21 tests pass; manually verified `to(2500, m, km)` \u2192 2.5, `to(1, mi, km)` \u2192 ",
+   "brief": "<!-- preflight brief | model=claude-haiku-4-5-20251001 | cost=$0.0105 | tokens=8540 | size=M tier=cheap | heuristic_size=M -->\n# Brief\n\n## Start here\n- **calcx/units.py** \u2014 contains unit conversion logic; issue is conversions fail when target is non-base unit\n- **tests/test_calcx.py** \u2014 baseline tests; need to verify current behavior and add coverage for reverse conversions\n- **calcx/report.py** \u2014 batch report error handling; UnitError likely being caught and re-wrapped generically\n- **calcx/evaluator.py** \u2014 where `to()` function is evaluated; check how UnitError is raised/propagated\n- **calcx/__init__.py** \u2014 public API entry point; verify `calc()` call signature and error contract\n\n## Conventions\n- Type hints required (preserve all existing annotations)\n- Tests in `tests/` directory; use pytest assertions\n- Recursive-descent parser pattern (don't refactor parsing layer)\n- Error types matter: UnitError should propagate through batch operations, not be swallowed\n\n## Verify\n```bash\npytest -q\n```\nSpecific tests to validate: `to(2500, m, km)` must return 2.5, `to(1, mi, km)` must return ~1.609, batch report with bad unit must raise/report UnitError not generic error.\n\n## Risks\n- Conversion direction logic (multiply vs divide by factor) \u2014 test both directions after fix\n- Batch error handling may mask UnitError in other places; audit all `except` blocks that catch it\n- Units may have complex relationships beyond simple base-unit factors; don't assume linear scaling\n\n## Size\n**M** \u2014 Unit conversion fix (units.py) + error propagation in batch reporting (report.py) + evaluator error handling, spanning 2-3 modules but confined to unit system logic.\n\n## Tier\n**cheap** \u2014 Likely a sign error or missing reciprocal in conversion factor math, and error re-wrapping. No architectural changes needed.\n",
+   "handoff": "",
+   "final_tier": "sonnet",
+   "wall": 80.30329370498657
   }
  }
 }

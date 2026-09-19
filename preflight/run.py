@@ -88,16 +88,22 @@ def git_diff(root: Path) -> str:
 
 
 def attempt(root: Path, issue: str, brief: str | None = None, model: str = "haiku", test_cmd: str | None = None,
-            workdir: Path | None = None, timeout: int = 900) -> Attempt:
-    """Run one attempt. If `workdir` is given, work there (already a fresh copy); else make one."""
+            workdir: Path | None = None, timeout: int = 900, max_turns: int | None = None) -> Attempt:
+    """Run one attempt. If `workdir` is given, work there (already a fresh copy); else make one.
+
+    `max_turns` caps the agent's tool-call budget; a capped cheap attempt is how the cascade keeps failure cheap.
+    """
     wd = workdir or fresh_copy(root)
     test_cmd = test_cmd or scan(root, issue).test_cmd
     prompt = (ATTEMPT_PROMPT_BRIEFED.format(issue=issue, brief=brief) if brief
               else ATTEMPT_PROMPT_COLD.format(issue=issue))
     t0 = time.time()
     try:
-        res = llm.call(prompt, model=model, cwd=wd, agentic=True, timeout=timeout, system=ATTEMPT_SYSTEM)
+        res = llm.call(prompt, model=model, cwd=wd, agentic=True, timeout=timeout, system=ATTEMPT_SYSTEM,
+                       max_turns=max_turns)
         text, cost, tok, turns = res.text, res.cost_usd, res.total_tokens, res.num_turns
+        if res.raw.get("subtype") == "error_max_turns":
+            text = f"(hit the {max_turns}-turn budget before finishing)\n" + text
     except subprocess.TimeoutExpired:
         text, cost, tok, turns = "(agent timed out)", 0.0, 0, 0
     secs = time.time() - t0

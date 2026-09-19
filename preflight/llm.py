@@ -34,7 +34,7 @@ def _claude_bin() -> str:
 
 
 def call(prompt: str, model: str = "haiku", cwd: Path | None = None, agentic: bool = False,
-         timeout: int = 900, system: str | None = None) -> LLMResult:
+         timeout: int = 900, system: str | None = None, max_turns: int | None = None) -> LLMResult:
     """Run one non-interactive claude session.
 
     agentic=True lets the model use tools (read/edit/run) inside `cwd`; used for attempts.
@@ -50,6 +50,8 @@ def call(prompt: str, model: str = "haiku", cwd: Path | None = None, agentic: bo
         cmd += ["--tools", ""]
     if system:
         cmd += ["--append-system-prompt", system]
+    if max_turns:
+        cmd += ["--max-turns", str(max_turns)]
     proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True, encoding="utf-8",
                           errors="replace", cwd=str(cwd) if cwd else None, timeout=timeout)
     out = proc.stdout.strip()

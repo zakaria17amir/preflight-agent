@@ -48,7 +48,8 @@ class CascadeResult:
 
 
 def cascade(root: Path, issue: str, tiers: list[str], test_cmd: str | None = None, use_brief: bool = True,
-            use_handoff: bool = True, brief_model: str = "haiku") -> CascadeResult:
+            use_handoff: bool = True, brief_model: str = "haiku", cheap_max_turns: int | None = None) -> CascadeResult:
+    """Run `tiers` in order. `cheap_max_turns` caps every tier except the last, so a failed cheap attempt stays cheap."""
     test_cmd = test_cmd or scan(root, issue).test_cmd
     out = CascadeResult(passed=False)
     brief_text = None
@@ -57,7 +58,9 @@ def cascade(root: Path, issue: str, tiers: list[str], test_cmd: str | None = Non
         out.brief = brief_text
         out.stages.append(Stage("brief", bres.cost_usd, bres.total_tokens, bres.duration_ms / 1000, model=bres.model))
     for i, tier in enumerate(tiers):
-        a = attempt(root, issue, brief=brief_text, model=tier, test_cmd=test_cmd)
+        is_last = i + 1 == len(tiers)
+        a = attempt(root, issue, brief=brief_text, model=tier, test_cmd=test_cmd,
+                    max_turns=None if is_last else cheap_max_turns)
         out.attempts.append(a)
         out.stages.append(Stage(f"attempt{i+1}", a.cost_usd, a.tokens, a.seconds, passed=a.passed, model=a.model))
         if a.passed:

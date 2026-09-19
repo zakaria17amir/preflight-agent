@@ -38,7 +38,7 @@ def cmd_handoff(a):
 def cmd_cascade(a):
     from .cascade import cascade
     r = cascade(Path(a.repo), a.issue, tiers=a.tiers.split(","), test_cmd=a.test_cmd, use_brief=not a.no_brief,
-                use_handoff=not a.no_handoff)
+                use_handoff=not a.no_handoff, cheap_max_turns=a.cheap_max_turns)
     print(r.summary())
 
 
@@ -68,7 +68,9 @@ def main(argv=None):
     c = sub.add_parser("cascade", help="cheap tier first, escalate with handoff on failure")
     c.add_argument("repo"); c.add_argument("issue"); c.add_argument("--tiers", default="haiku,sonnet")
     c.add_argument("--test-cmd", default=None); c.add_argument("--no-brief", action="store_true")
-    c.add_argument("--no-handoff", action="store_true"); c.set_defaults(fn=cmd_cascade)
+    c.add_argument("--no-handoff", action="store_true")
+    c.add_argument("--cheap-max-turns", type=int, default=None, help="turn budget for every tier except the last")
+    c.set_defaults(fn=cmd_cascade)
 
     a = p.parse_args(argv)
     a.fn(a)

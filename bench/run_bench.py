@@ -58,10 +58,10 @@ def arm_brief_cheap(bug: str, model: str) -> dict:
                 tests=a.tests.summary, summary=a.agent_summary[:600], brief=brief)
 
 
-def arm_cascade(bug: str, tiers: list[str]) -> dict:
+def arm_cascade(bug: str, tiers: list[str], use_handoff: bool = True, cheap_max_turns: int | None = None) -> dict:
     wd, issue = buggy_copy(bug)
     # cascade() makes its own fresh copies per attempt from `root`; give it the buggy tree as root.
-    r = cascade(wd, issue, tiers=tiers, test_cmd=TEST_CMD)
+    r = cascade(wd, issue, tiers=tiers, test_cmd=TEST_CMD, use_handoff=use_handoff, cheap_max_turns=cheap_max_turns)
     return dict(passed=r.passed, cost=r.cost_usd, tokens=r.tokens, turns=sum(a.turns for a in r.attempts),
                 seconds=sum(s.seconds for s in r.stages),
                 stages=[dict(name=s.name, model=s.model, cost=s.cost_usd, tokens=s.tokens, passed=s.passed) for s in r.stages],
@@ -73,7 +73,21 @@ ARMS = {
     "A_cold_strong": lambda bug, cfg: arm_cold_strong(bug, cfg["strong"]),
     "B_brief_cheap": lambda bug, cfg: arm_brief_cheap(bug, cfg["cheap"]),
     "C_cascade": lambda bug, cfg: arm_cascade(bug, [cfg["cheap"], cfg["strong"]]),
+    # control: same cascade, but the strong tier starts clean (original brief, no post-mortem).
+    "D_cascade_nohandoff": lambda bug, cfg: arm_cascade(bug, [cfg["cheap"], cfg["strong"]], use_handoff=False),
+    # capped cheap tier (CHEAP_TURNS tool calls) so escalation actually happens; E vs F isolates the handoff.
+    "E_capped_handoff": lambda bug, cfg: arm_cascade(bug, [cfg["cheap"], cfg["strong"]], True, cfg["cheap_turns"]),
+    "F_capped_nohandoff": lambda bug, cfg: arm_cascade(bug, [cfg["cheap"], cfg["strong"]], False, cfg["cheap_turns"]),
 }
+DEFAULT_ARMS = ["A_cold_strong", "B_brief_cheap", "C_cascade"]
+
+
+def load_results() -> dict:
+    out: dict = {}
+    for f in sorted((RESULTS / "runs").glob("*.json")):
+        bug, arm = f.stem.split(".", 1)
+        out.setdefault(bug, {})[arm] = json.loads(f.read_text(encoding="utf-8"))
+    return out
 
 
 def table(results: dict, bugs: list[str], arms: list[str]) -> str:
@@ -86,7 +100,8 @@ def table(results: dict, bugs: list[str], arms: list[str]) -> str:
             if not r:
                 row.append("—")
                 continue
-            tier = f" ({r['final_tier'].split('-')[1]})" if r.get("final_tier") else ""
+            ft = r.get("final_tier") or ""
+            tier = f" ({ft.split('-')[1] if ft.startswith('claude-') else ft})" if ft else ""
             row.append(f"{'PASS' if r['passed'] else 'FAIL'} ${r['cost']:.3f}{tier}")
             tot[a]["cost"] += r["cost"]; tot[a]["passed"] += r["passed"]; tot[a]["n"] += 1
         lines.append("| " + " | ".join(row) + " |")
@@ -98,16 +113,18 @@ def table(results: dict, bugs: list[str], arms: list[str]) -> str:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--bugs", default=",".join(BUGS))
-    ap.add_argument("--arms", default=",".join(ARMS))
+    ap.add_argument("--arms", default=",".join(DEFAULT_ARMS), help=f"comma list from: {','.join(ARMS)}")
+    ap.add_argument("--table-arms", default=None, help="arms to show in the table (default: all recorded)")
     ap.add_argument("--cheap", default="haiku")
     ap.add_argument("--strong", default="sonnet")
+    ap.add_argument("--cheap-turns", type=int, default=4, help="turn budget for the cheap tier in arms E/F")
     ap.add_argument("--redo", action="store_true", help="rerun even if a result exists")
     a = ap.parse_args()
-    cfg = dict(cheap=a.cheap, strong=a.strong)
+    cfg = dict(cheap=a.cheap, strong=a.strong, cheap_turns=a.cheap_turns)
     RESULTS.mkdir(exist_ok=True)
     (RESULTS / "runs").mkdir(exist_ok=True)
     rpath = RESULTS / "results.json"
-    results = json.loads(rpath.read_text()) if rpath.exists() else {}
+    results = load_results()
     bugs, arms = a.bugs.split(","), a.arms.split(",")
     for bug in bugs:
         for arm in arms:
@@ -120,12 +137,17 @@ def main():
             except Exception as e:  # keep the bench going; record the failure
                 r = dict(passed=False, cost=0.0, tokens=0, turns=0, seconds=time.time() - t0, stages=[], error=repr(e))
             r["wall"] = time.time() - t0
-            results.setdefault(bug, {})[arm] = r
-            rpath.write_text(json.dumps(results, indent=1), encoding="utf-8")
+            # per-run files are the source of truth; results.json is rebuilt from them so concurrent
+            # bench processes (different arms) can't clobber each other's results.
             (RESULTS / "runs" / f"{bug}.{arm}.json").write_text(json.dumps(r, indent=1), encoding="utf-8")
+            results = load_results()
+            rpath.write_text(json.dumps(results, indent=1), encoding="utf-8")
             print(f"    -> {'PASS' if r['passed'] else 'FAIL'} ${r['cost']:.4f} {r['tokens']} tok {r['wall']:.0f}s"
                   + (f"  ERROR {r['error']}" if r.get("error") else ""), flush=True)
-    md = table(results, bugs, arms)
+    results = load_results()
+    rpath.write_text(json.dumps(results, indent=1), encoding="utf-8")
+    shown = a.table_arms.split(",") if a.table_arms else [x for x in ARMS if any(x in results.get(b, {}) for b in bugs)]
+    md = table(results, bugs, shown)
     print("\n" + md)
     (RESULTS / "table.md").write_text(md, encoding="utf-8")
     readme = ROOT.parent / "README.md"
