@@ -29,6 +29,7 @@ def cmd_run(a):
                 model=a.model, test_cmd=a.test_cmd, max_turns=a.max_turns)
     print(r.summary())
     print(f"scratch copy kept at: {r.workdir}")
+    _write_patch(r.diff if r.passed else "", a.repo)
 
 
 def cmd_handoff(a):
@@ -54,6 +55,15 @@ def cmd_cascade(a):
     print(r.summary())
     if r.attempts:
         print(f"final scratch copy: {r.attempts[-1].workdir}")
+        _write_patch(r.attempts[-1].diff if r.passed else "", a.repo)
+
+
+def _write_patch(diff: str, repo: str) -> None:
+    """Write the passing diff to PATCH.diff so it can be applied to the real repo."""
+    if not diff.strip():
+        return
+    Path("PATCH.diff").write_text(diff, encoding="utf-8")
+    print(f"patch written to PATCH.diff — apply with:  git -C \"{repo}\" apply \"{Path('PATCH.diff').resolve()}\"")
 
 
 def _record_live(a, r) -> None:
